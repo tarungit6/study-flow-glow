@@ -1,4 +1,3 @@
-
 import {
   Calendar,
   Clock,
@@ -7,6 +6,7 @@ import {
   User,
   Bell,
 } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 import {
   Sidebar,
@@ -25,38 +25,26 @@ import { Badge } from "@/components/ui/badge";
 const menuItems = [
   {
     title: "Dashboard",
-    url: "#",
+    url: "/",
     icon: Layers,
     badge: null,
   },
   {
     title: "My Courses",
-    url: "#",
+    url: "/courses",
     icon: Calendar,
     badge: "4",
   },
   {
     title: "Assignments",
-    url: "#",
+    url: "/assignments",
     icon: ListTodo,
     badge: "2",
   },
   {
     title: "Schedule",
-    url: "#",
+    url: "/schedule",
     icon: Clock,
-    badge: null,
-  },
-  {
-    title: "Notifications",
-    url: "#",
-    icon: Bell,
-    badge: "5",
-  },
-  {
-    title: "Profile",
-    url: "#",
-    icon: User,
     badge: null,
   },
 ];
@@ -86,7 +74,13 @@ export function AppSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className="hover:bg-accent transition-colors">
-                    <a href={item.url} className="flex items-center justify-between">
+                    <NavLink
+                      to={item.url}
+                      className={({ isActive }) =>
+                        "flex items-center justify-between w-full" +
+                        (isActive ? " bg-accent font-semibold" : "")
+                      }
+                    >
                       <div className="flex items-center gap-2">
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
@@ -96,7 +90,7 @@ export function AppSidebar() {
                           {item.badge}
                         </Badge>
                       )}
-                    </a>
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

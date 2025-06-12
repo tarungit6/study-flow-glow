@@ -1,7 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
+import { NavLink } from "react-router-dom";
 
 type Achievement = Database['public']['Tables']['achievements']['Row'];
 type UserAchievement = Database['public']['Tables']['user_achievements']['Row'];

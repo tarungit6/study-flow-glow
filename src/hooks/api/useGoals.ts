@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
@@ -74,7 +73,7 @@ export const useUpdateGoalProgress = () => {
         .from('daily_goals')
         .update({
           completed_minutes: completedMinutes,
-          is_achieved: completedMinutes >= (await supabase.from('daily_goals').select('target_minutes').eq('id', goalId).single()).data?.target_minutes || 0,
+          is_achieved: Boolean(completedMinutes >= (await supabase.from('daily_goals').select('target_minutes').eq('id', goalId).single()).data?.target_minutes || 0),
         })
         .eq('id', goalId)
         .select()

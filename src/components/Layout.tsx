@@ -37,10 +37,10 @@ export function Layout({ children }: LayoutProps) {
               <div className="flex items-center gap-4">
                 <SidebarTrigger className="md:hidden" />
                 <div className="hidden md:block">
-                  <h1 className="text-xl font-semibold">Dashboard</h1>
-                  <p className="text-sm text-muted-foreground">
+                  <h1 className="text-xl font-semibold">StudyFlow</h1>
+                  {/* <p className="text-sm text-muted-foreground">
                     Welcome back, {profile?.full_name || 'Student'}! 👋
-                  </p>
+                  </p> */}
                 </div>
               </div>
               

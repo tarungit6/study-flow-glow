@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -101,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, fullName?: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -109,7 +108,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: fullName ? { full_name: fullName } : undefined,
       }
     });
-    return { error };
+
+    if (error) return { error };
+
+    // Create profile if signup was successful
+    if (data.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          full_name: fullName,
+          role: 'student',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        return { error: profileError };
+      }
+    }
+
+    return { error: null };
   };
 
   const signOut = async () => {
