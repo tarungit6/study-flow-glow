@@ -2,15 +2,30 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { ThemeToggle } from "./ThemeToggle";
-import { Bell, User } from "lucide-react";
+import { Bell, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
+  const { signOut, profile } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -23,7 +38,9 @@ export function Layout({ children }: LayoutProps) {
                 <SidebarTrigger className="md:hidden" />
                 <div className="hidden md:block">
                   <h1 className="text-xl font-semibold">Dashboard</h1>
-                  <p className="text-sm text-muted-foreground">Welcome back, Alex! 👋</p>
+                  <p className="text-sm text-muted-foreground">
+                    Welcome back, {profile?.full_name || 'Student'}! 👋
+                  </p>
                 </div>
               </div>
               
@@ -35,9 +52,32 @@ export function Layout({ children }: LayoutProps) {
                   </Badge>
                 </Button>
                 <ThemeToggle />
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <User className="h-4 w-4" />
-                </Button>
+                
+                {/* User dropdown with logout */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {profile?.full_name || 'Student'}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {profile?.role || 'student'}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </header>
