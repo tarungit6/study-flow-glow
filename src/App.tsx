@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import AdminDashboard from "./pages/AdminDashboard";
 import InstructorDashboard from "./pages/InstructorDashboard";
+import UploadContent from "./pages/UploadContent";
+import CreateTest from "./pages/CreateTest";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import Assignments from "./pages/Assignments";
@@ -63,6 +66,19 @@ const App = () => (
             <Route path="/instructor" element={
               <ProtectedRoute allowedRoles={['instructor']}>
                 <InstructorDashboard />
+              </ProtectedRoute>
+            } />
+            
+            {/* Instructor sub-routes */}
+            <Route path="/instructor/upload" element={
+              <ProtectedRoute allowedRoles={['instructor']}>
+                <UploadContent />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/instructor/tests" element={
+              <ProtectedRoute allowedRoles={['instructor']}>
+                <CreateTest />
               </ProtectedRoute>
             } />
             
