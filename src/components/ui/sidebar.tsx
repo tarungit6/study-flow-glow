@@ -235,7 +235,11 @@ const Sidebar = React.forwardRef<
             variant === "floating" || variant === "inset"
               ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
               : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
-            state === "expanded" ? "translate-x-0" : "-translate-x-full",
+            state === "expanded"
+              ? "translate-x-0"
+              : side === "left"
+                ? "-translate-x-full"
+                : "translate-x-full",
             className
           )}
           {...props}
