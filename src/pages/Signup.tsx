@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [role, setRole] = useState<'student' | 'instructor'>('student');
   const [isLoading, setIsLoading] = useState(false);
   const { signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      const { error } = await signUp(email, password, fullName);
+      const { error } = await signUp(email, password, fullName, role);
       
       if (error) {
         if (error.message === 'User already registered') {
@@ -94,6 +94,31 @@ export default function Signup() {
                 required
                 minLength={6}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="student"
+                    checked={role === 'student'}
+                    onChange={() => setRole('student')}
+                  />
+                  Student
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="instructor"
+                    checked={role === 'instructor'}
+                    onChange={() => setRole('instructor')}
+                  />
+                  Instructor
+                </label>
+              </div>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Creating account...' : 'Create account'}
