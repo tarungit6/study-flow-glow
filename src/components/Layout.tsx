@@ -14,6 +14,8 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -22,10 +24,21 @@ interface LayoutProps {
 function LayoutContent({ children }: LayoutProps) {
   const { signOut, profile } = useAuth();
   const { toggleSidebar } = useSidebar();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
   };
+
+  useEffect(() => {
+    if (profile) {
+      if (profile.role === 'instructor') {
+        navigate('/instructor');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [profile, navigate]);
 
   return (
     <div className="min-h-screen flex w-full bg-background">
