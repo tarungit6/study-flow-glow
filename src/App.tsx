@@ -1,8 +1,9 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom"; // Removed Outlet here as it might not be used anymore at this level
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -62,7 +63,7 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            {/* INSTRUCTOR DASHBOARD with nested routes */}
+            {/* Instructor routes */}
             <Route
               path="/instructor"
               element={
@@ -70,14 +71,24 @@ const App = () => (
                   <InstructorDashboard />
                 </ProtectedRoute>
               }
-            >
-              {/* Index (overview) */}
-              <Route index element={<></>} /> 
-              {/* Nested pages (UploadContent and CreateTest) */}
-              <Route path="upload" element={<UploadContent />} />
-              <Route path="tests" element={<CreateTest />} />
-            </Route>
-            {/* Note: No longer mounting UploadContent/CreateTest at root level */}
+            />
+            <Route
+              path="/instructor/upload"
+              element={
+                <ProtectedRoute allowedRoles={['instructor']}>
+                  <UploadContent />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/instructor/tests"
+              element={
+                <ProtectedRoute allowedRoles={['instructor']}>
+                  <CreateTest />
+                </ProtectedRoute>
+              }
+            />
+            {/* Note: UploadContent and CreateTest are no longer nested under /instructor */}
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
