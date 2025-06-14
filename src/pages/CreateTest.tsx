@@ -50,7 +50,7 @@ const initialCurrentQuestion: Partial<Question> = {
 };
 
 export default function CreateTest() {
-  const { toast } = useToast(); // For local UI feedback
+  const { toast } = useToast();
   const { user } = useAuth();
   const { createQuiz, isLoading: isSubmittingQuiz } = useQuizzes(user?.id);
 
@@ -60,8 +60,8 @@ export default function CreateTest() {
 
   const subjects = ['Mathematics', 'Science', 'English', 'History', 'Computer Science'];
   const gradeLevels = ['Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
-  const topics = ['Algebra', 'Geometry', 'Trigonometry', 'Calculus']; // Example, can be dynamic
-  const concepts = ['Linear Equations', 'Quadratic Equations', 'Factoring', 'Systems of Equations']; // Example
+  const topics = ['Algebra', 'Geometry', 'Trigonometry', 'Calculus'];
+  const concepts = ['Linear Equations', 'Quadratic Equations', 'Factoring', 'Systems of Equations'];
 
   const addQuestion = () => {
     if (!currentQuestion.text || !currentQuestion.correctAnswer) {
@@ -131,15 +131,12 @@ export default function CreateTest() {
       time_limit_minutes: testData.timeLimit,
       instructions: testData.instructions || null,
       status: publish ? 'published' : 'draft',
-      // course_id: null, // Assuming not linking to a course for now, can be added
-      // passing_score: 70, // Default, or make it configurable
-      // max_attempts: 1, // Default, or make it configurable
     };
 
     const questionsPayload: Omit<QuizQuestionInsert, 'quiz_id' | 'id' | 'created_at'>[] = questions.map((q, index) => ({
       question_text: q.text,
-      question_type: q.type, // Ensure q.type matches DB enum values ('multiple_choice', 'true_false')
-      options: q.options, // JSONB in DB, string[] is fine. For T/F, this will be ['True', 'False']
+      question_type: q.type,
+      options: q.options,
       correct_answer: q.correctAnswer,
       explanation: q.explanation || null,
       points: q.marks,
@@ -152,17 +149,14 @@ export default function CreateTest() {
 
     try {
       await createQuiz.mutateAsync({ quiz: quizPayload, questions: questionsPayload });
-      // Success toast is handled by useQuizzes hook
       setTestData(initialTestData);
       setQuestions([]);
       setCurrentQuestion(initialCurrentQuestion);
     } catch (error) {
-      // Error toast is handled by useQuizzes hook
       console.error("Failed to create test:", error);
-      // Optionally, show a specific error toast here if the hook's isn't sufficient
-      // toast({ title: "Submission Error", description: "Could not save the test. Please try again.", variant: "destructive" });
     }
   };
+
 
   return (
     <Layout>
@@ -335,7 +329,7 @@ export default function CreateTest() {
                         ...prev, 
                         type: value,
                         options: value === 'multiple_choice' ? prev.options?.length === 4 ? prev.options : ['', '', '', ''] : ['True', 'False'],
-                        correctAnswer: '' // Reset correct answer when type changes
+                        correctAnswer: '' 
                       }))
                     }
                     disabled={isSubmittingQuiz}
@@ -390,7 +384,7 @@ export default function CreateTest() {
                     </SelectTrigger>
                     <SelectContent>
                       {currentQuestion.options?.map((option, index) => 
-                        option && option.trim() !== '' && ( // Ensure option is not empty
+                        option && option.trim() !== '' && (
                           <SelectItem key={index} value={option}>
                             {option}
                           </SelectItem>
@@ -398,7 +392,7 @@ export default function CreateTest() {
                       )}
                     </SelectContent>
                   </Select>
-                ) : ( // True/False
+                ) : ( 
                   <Select 
                     value={currentQuestion.correctAnswer} 
                     onValueChange={(value) => setCurrentQuestion(prev => ({ ...prev, correctAnswer: value }))}
@@ -475,7 +469,9 @@ export default function CreateTest() {
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             {question.options.map((option, optIndex) => (
                               <div key={optIndex} className={`p-2 rounded ${
-                                option === question.correctAnswer ? 'bg-green-100 text-green-800' : 'bg-muted'
+                                option === question.correctAnswer 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-700/20 dark:text-green-300' 
+                                  : 'bg-muted'
                               }`}>
                                 {String.fromCharCode(65 + optIndex)}. {option}
                               </div>
@@ -484,7 +480,9 @@ export default function CreateTest() {
                         ) : (
                           <div className="text-sm">
                             <span className={`px-2 py-1 rounded ${
-                              question.correctAnswer === 'True' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              question.correctAnswer === 'True' 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-700/20 dark:text-green-300' 
+                                : 'bg-red-100 text-red-800 dark:bg-red-700/20 dark:text-red-300'
                             }`}>
                               Correct Answer: {question.correctAnswer}
                             </span>
@@ -503,7 +501,7 @@ export default function CreateTest() {
                         size="sm"
                         onClick={() => removeQuestion(question.id)}
                         className="text-red-600 hover:text-red-700"
-                        disabled={isSubmittingQuiz} // Disable if a submission is in progress
+                        disabled={isSubmittingQuiz}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -513,7 +511,6 @@ export default function CreateTest() {
               </div>
 
               <Separator className="my-6" />
-
               <div className="flex justify-between items-center">
                 <div className="text-sm text-muted-foreground">
                   Total Questions: {questions.length} | Total Marks: {questions.reduce((sum, q) => sum + q.marks, 0)}
