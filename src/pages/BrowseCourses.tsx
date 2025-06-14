@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCourses, useEnrollInCourse } from '@/hooks/api/useCourses';
 import { useEnrollments } from '@/hooks/api/useCourses';
@@ -28,6 +27,14 @@ export default function BrowseCourses() {
   const { data: enrollments, isLoading: enrollmentsLoading } = useEnrollments();
   const enrollInCourse = useEnrollInCourse();
 
+  // Add debugging
+  useEffect(() => {
+    console.log('BrowseCourses - All courses data:', allCourses);
+    console.log('BrowseCourses - Enrollments data:', enrollments);
+    console.log('BrowseCourses - Loading states:', { isLoading, enrollmentsLoading });
+    console.log('BrowseCourses - Error:', error);
+  }, [allCourses, enrollments, isLoading, enrollmentsLoading, error]);
+
   // Get enrolled course IDs
   const enrolledCourseIds = useMemo(() => {
     if (!enrollments) return new Set();
@@ -38,9 +45,12 @@ export default function BrowseCourses() {
   const availableCourses = useMemo(() => {
     if (!allCourses) return [];
     
-    return allCourses.filter(course => 
+    const filtered = allCourses.filter(course => 
       course.is_published && !enrolledCourseIds.has(course.id)
     );
+    
+    console.log('Available courses after filtering:', filtered);
+    return filtered;
   }, [allCourses, enrolledCourseIds]);
 
   // Get unique categories and difficulties
@@ -133,6 +143,10 @@ export default function BrowseCourses() {
         <div>
           <h1 className="text-2xl font-bold">Browse Courses</h1>
           <p className="text-muted-foreground">Discover new courses and expand your knowledge</p>
+          {/* Add debug info */}
+          <p className="text-xs text-muted-foreground mt-1">
+            Debug: Total courses: {allCourses?.length || 0}, Available: {availableCourses.length}, Enrolled: {enrollments?.length || 0}
+          </p>
         </div>
         <Link to="/" className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition">
           Back to Home
