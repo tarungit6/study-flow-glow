@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -79,8 +78,9 @@ export function ContentConceptsAndDifficultyForm({
                 <SelectItem key={difficulty} value={difficulty}>
                   <div className="flex items-center gap-2">
                     <Target className={`h-3 w-3 ${
-                      difficulty === 'easy' ? 'text-green-500' :
-                      difficulty === 'medium' ? 'text-yellow-500' : 'text-red-500'
+                      difficulty === 'easy' ? 'text-green-500 dark:text-green-400' :
+                      difficulty === 'medium' ? 'text-yellow-500 dark:text-yellow-400' : 
+                      'text-red-500 dark:text-red-400'
                     }`} />
                     {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
                   </div>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -127,10 +126,10 @@ export default function UploadContent() {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'easy': return 'text-green-600 bg-green-50 border-green-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'hard': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'easy': return 'text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-700/20 border-green-200 dark:border-green-600/40';
+      case 'medium': return 'text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-700/20 border-yellow-200 dark:border-yellow-600/40';
+      case 'hard': return 'text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-700/20 border-red-200 dark:border-red-600/40';
+      default: return 'text-muted-foreground bg-muted border-border';
     }
   };
 
@@ -142,7 +141,7 @@ export default function UploadContent() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white mb-4">
             <Upload className="h-8 w-8" />
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400">
             Upload Educational Content
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -151,7 +150,7 @@ export default function UploadContent() {
         </div>
 
         {/* Main Form Card */}
-        <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50">
+        <Card className="shadow-xl"> {/* Rely on Card's default bg-card and border, custom gradient removed */}
           <CardHeader className="pb-8">
             <CardTitle className="flex items-center gap-3 text-2xl">
               <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
@@ -167,7 +166,7 @@ export default function UploadContent() {
             <form className="space-y-8">
               {/* Basic Information Section */}
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
                   Basic Information
                 </h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -239,7 +238,7 @@ export default function UploadContent() {
 
               {/* Categorization Section */}
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 border-b border-gray-200 pb-2">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 border-b border-border pb-2">
                   <BookOpen className="h-5 w-5 text-blue-600" />
                   Categorization
                 </h3>
@@ -304,7 +303,7 @@ export default function UploadContent() {
 
               {/* Concepts & Difficulty Section */}
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 border-b border-gray-200 pb-2">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 border-b border-border pb-2">
                   <Tag className="h-5 w-5 text-purple-600" />
                   Concepts & Difficulty
                 </h3>
@@ -332,12 +331,12 @@ export default function UploadContent() {
                       </Button>
                     </div>
                     {formData.concepts.length > 0 && (
-                      <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-lg border">
+                      <div className="flex flex-wrap gap-2 p-4 bg-muted rounded-lg border border-border">
                         {formData.concepts.map(concept => (
                           <Badge 
                             key={concept} 
                             variant="secondary" 
-                            className="cursor-pointer hover:bg-red-100 transition-colors px-3 py-1 text-sm"
+                            className="cursor-pointer hover:bg-red-100 dark:hover:bg-red-700/30 transition-colors px-3 py-1 text-sm"
                             onClick={() => !isSubmitting && removeConcept(concept)}
                           >
                             {concept}
