@@ -3,12 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle, Circle, Target, Terminal } from "lucide-react";
-import { useDailyGoals } from "@/hooks/api/useGoals"; // Assuming this hook exists and fetches today's goal
+import { CheckCircle, Target, Terminal } from "lucide-react";
+import { useTodayGoal as useDailyGoals } from "@/hooks/api/useGoals"; // Using useTodayGoal and aliasing for current usage
 
 export function DailyGoalTracker() {
-  // Assuming useDailyGoals fetches an object like:
-  // { goal_date, target_minutes, completed_minutes, is_achieved } for today
+  // Assuming useDailyGoals (now useTodayGoal) fetches an object like:
+  // { id, goal_date, target_minutes, completed_minutes, is_achieved } for today
   // or null/undefined if no goal is set for today.
   const { data: dailyGoal, isLoading, error } = useDailyGoals();
 
@@ -42,7 +42,7 @@ export function DailyGoalTracker() {
             ))}
           </div>
         </CardContent>
-      </Card>>
+      </Card>
     );
   }
 
@@ -67,10 +67,15 @@ export function DailyGoalTracker() {
   let completedMessage = "No goal set for today.";
   let goalStatusText = "0/1 goal";
 
-  if (dailyGoal && dailyGoal.target_minutes > 0) {
-    overallProgress = Math.min((dailyGoal.completed_minutes / dailyGoal.target_minutes) * 100, 100);
-    goalStatusText = dailyGoal.is_achieved ? "1/1 completed" : "0/1 completed";
-  } else if (dailyGoal && dailyGoal.target_minutes === 0 && dailyGoal.is_achieved) {
+  // Ensure dailyGoal and its properties are valid before calculations
+  const targetMinutes = dailyGoal?.target_minutes ?? 0;
+  const completedMinutes = dailyGoal?.completed_minutes ?? 0;
+  const isAchieved = dailyGoal?.is_achieved ?? false;
+
+  if (dailyGoal && targetMinutes > 0) {
+    overallProgress = Math.min((completedMinutes / targetMinutes) * 100, 100);
+    goalStatusText = isAchieved ? "1/1 completed" : "0/1 completed";
+  } else if (dailyGoal && targetMinutes === 0 && isAchieved) {
     // Handles cases where target might be 0 but goal is marked achieved (e.g. rest day goal)
     overallProgress = 100;
     goalStatusText = "1/1 completed";
@@ -78,7 +83,7 @@ export function DailyGoalTracker() {
 
 
   const getMessage = () => {
-    if (!dailyGoal || dailyGoal.target_minutes === 0) return motivationalMessages[4]; // "Set a goal..."
+    if (!dailyGoal || targetMinutes === 0) return motivationalMessages[4]; // "Set a goal..."
     if (overallProgress === 100) return "Perfect day! Goal completed! 🎉";
     if (overallProgress >= 75) return motivationalMessages[0];
     if (overallProgress >= 50) return motivationalMessages[1];
@@ -90,13 +95,13 @@ export function DailyGoalTracker() {
 
   // Simplified goals display based on dailyGoal structure
   const displayedGoals = [];
-  if (dailyGoal && dailyGoal.target_minutes > 0) {
+  if (dailyGoal && targetMinutes > 0) {
     displayedGoals.push({
-      task: `Study for ${dailyGoal.target_minutes} minutes`,
-      completed: dailyGoal.is_achieved,
+      task: `Study for ${targetMinutes} minutes`,
+      completed: isAchieved,
       progress: overallProgress,
     });
-  } else if (dailyGoal && dailyGoal.target_minutes === 0 && dailyGoal.is_achieved) {
+  } else if (dailyGoal && targetMinutes === 0 && isAchieved) {
      displayedGoals.push({
       task: `Daily goal achieved (e.g. Rest day)`,
       completed: true,
@@ -104,7 +109,7 @@ export function DailyGoalTracker() {
     });
   }
   // Add a placeholder if no goals or goal not loaded properly
-   else if (!dailyGoal) {
+   else if (!dailyGoal && !isLoading) { // Condition changed to !dailyGoal && !isLoading
     displayedGoals.push({
       task: "No specific goal set for today.",
       completed: false,
@@ -142,15 +147,15 @@ export function DailyGoalTracker() {
                 {goal.completed ? (
                   <CheckCircle className="w-5 h-5 text-green-500" />
                 ) : (
-                  <Target className="w-5 h-5 text-primary" /> // Changed to Target for active goal
+                  <Target className="w-5 h-5 text-primary" /> 
                 )}
                 <div className="flex-1">
                   <span className={`text-sm ${goal.completed ? 'line-through text-muted-foreground' : 'text-card-foreground'}`}>
                     {goal.task}
                   </span>
-                  {!goal.completed && goal.progress > 0 && dailyGoal && dailyGoal.target_minutes > 0 &&(
+                  {!goal.completed && goal.progress > 0 && dailyGoal && targetMinutes > 0 && (
                      <div className="text-xs text-muted-foreground mt-1">
-                        {dailyGoal.completed_minutes} / {dailyGoal.target_minutes} mins studied
+                        {completedMinutes} / {targetMinutes} mins studied
                     </div>
                   )}
                 </div>
@@ -158,7 +163,7 @@ export function DailyGoalTracker() {
             ))}
           </div>
         )}
-         {!dailyGoal && !isLoading && (
+         {!dailyGoal && !isLoading && displayedGoals.length === 0 && ( // Added displayedGoals.length === 0 to ensure message only shows if no goals are displayed
            <div className="text-center text-muted-foreground text-sm py-4">
              No daily goal set. Create one to track your progress!
              {/* TODO: Add a button/link to create/edit goals */}
@@ -168,4 +173,3 @@ export function DailyGoalTracker() {
     </Card>
   );
 }
-
