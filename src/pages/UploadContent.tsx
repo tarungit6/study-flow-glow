@@ -2,16 +2,17 @@
 import React, { useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Youtube, Upload } from 'lucide-react';
+import { Upload, Youtube, BookOpen, Tag, Target, Plus, X, Save, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-
-import { ContentBasicInfoForm } from '@/components/upload-content/ContentBasicInfoForm';
-import { ContentCategorizationForm } from '@/components/upload-content/ContentCategorizationForm';
-import { ContentConceptsAndDifficultyForm } from '@/components/upload-content/ContentConceptsAndDifficultyForm';
-import { ContentFormActions } from '@/components/upload-content/ContentFormActions';
 
 interface FormDataState {
   title: string;
@@ -46,7 +47,7 @@ export default function UploadContent() {
 
   const subjects = ['Mathematics', 'Science', 'English', 'History', 'Computer Science'];
   const gradeLevels = ['Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
-  const topics = ['Algebra', 'Geometry', 'Trigonometry', 'Calculus']; // This would be filtered by subject
+  const topics = ['Algebra', 'Geometry', 'Trigonometry', 'Calculus'];
   const difficulties = ['easy', 'medium', 'hard'];
   const contentTypes = ['video', 'document', 'article', 'quiz_link'];
 
@@ -109,7 +110,7 @@ export default function UploadContent() {
         title: `Content ${publish ? 'Published' : 'Uploaded'} Successfully`,
         description: `Your educational content has been ${publish ? 'published and is now available' : 'saved as a draft'}.`,
       });
-      setFormData(initialFormData); // Reset form
+      setFormData(initialFormData);
       setNewConcept('');
     }
   };
@@ -124,69 +125,294 @@ export default function UploadContent() {
     await commonSubmitLogic(true);
   };
 
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy': return 'text-green-600 bg-green-50 border-green-200';
+      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'hard': return 'text-red-600 bg-red-50 border-red-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
+
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Upload className="h-6 w-6 text-primary" />
+      <div className="max-w-5xl mx-auto p-6 space-y-8">
+        {/* Header Section */}
+        <div className="text-center space-y-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white mb-4">
+            <Upload className="h-8 w-8" />
           </div>
-          <div>
-            <h1 className="text-3xl font-bold">Upload Educational Content</h1>
-            <p className="text-muted-foreground">Add YouTube videos and educational materials for your students</p>
-          </div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+            Upload Educational Content
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Share your knowledge with students by uploading videos, documents, and educational materials
+          </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Youtube className="h-5 w-5 text-red-600" />
+        {/* Main Form Card */}
+        <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50">
+          <CardHeader className="pb-8">
+            <CardTitle className="flex items-center gap-3 text-2xl">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+                <Youtube className="h-6 w-6 text-white" />
+              </div>
               Content Details
             </CardTitle>
-            <CardDescription>
-              Provide information about your educational content
+            <CardDescription className="text-base">
+              Provide comprehensive information about your educational content
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form className="space-y-6">
-              <ContentBasicInfoForm
-                formData={formData}
-                setFormData={setFormData}
-                isSubmitting={isSubmitting}
-                contentTypes={contentTypes}
-              />
-              
+          <CardContent className="space-y-8">
+            <form className="space-y-8">
+              {/* Basic Information Section */}
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                  Basic Information
+                </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="title" className="text-sm font-medium">Content Title *</Label>
+                    <Input
+                      id="title"
+                      placeholder="e.g., Introduction to Linear Equations"
+                      value={formData.title}
+                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      required
+                      disabled={isSubmitting}
+                      className="h-12 text-base"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contentType" className="text-sm font-medium">Content Type</Label>
+                    <Select
+                      value={formData.contentType}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, contentType: value }))}
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Select content type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contentTypes.map(type => (
+                          <SelectItem key={type} value={type}>
+                            <div className="flex items-center gap-2">
+                              {type === 'video' && <Youtube className="h-4 w-4" />}
+                              {type === 'document' && <BookOpen className="h-4 w-4" />}
+                              <span>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="url" className="text-sm font-medium">Content URL</Label>
+                  <Input
+                    id="url"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={formData.url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                    type="url"
+                    disabled={isSubmitting}
+                    className="h-12 text-base"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-sm font-medium">Description</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe what students will learn from this content..."
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    rows={4}
+                    disabled={isSubmitting}
+                    className="text-base resize-none"
+                  />
+                </div>
+              </div>
+
               <Separator />
 
-              <ContentCategorizationForm
-                formData={formData}
-                setFormData={setFormData}
-                isSubmitting={isSubmitting}
-                subjects={subjects}
-                gradeLevels={gradeLevels}
-                topics={topics}
-              />
+              {/* Categorization Section */}
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 border-b border-gray-200 pb-2">
+                  <BookOpen className="h-5 w-5 text-blue-600" />
+                  Categorization
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Subject</Label>
+                    <Select 
+                      value={formData.subject} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, subject: value }))}
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Select subject" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {subjects.map(subject => (
+                          <SelectItem key={subject} value={subject}>{subject}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Grade Level</Label>
+                    <Select 
+                      value={formData.gradeLevel} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, gradeLevel: value }))}
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Select grade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {gradeLevels.map(grade => (
+                          <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Topic</Label>
+                    <Select 
+                      value={formData.topic} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, topic: value }))}
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Select topic" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {topics.map(topic => (
+                          <SelectItem key={topic} value={topic}>{topic}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
 
               <Separator />
 
-              <ContentConceptsAndDifficultyForm
-                formData={formData}
-                setFormData={setFormData}
-                newConcept={newConcept}
-                setNewConcept={setNewConcept}
-                addConcept={addConcept}
-                removeConcept={removeConcept}
-                isSubmitting={isSubmitting}
-                difficulties={difficulties}
-              />
+              {/* Concepts & Difficulty Section */}
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 border-b border-gray-200 pb-2">
+                  <Tag className="h-5 w-5 text-purple-600" />
+                  Concepts & Difficulty
+                </h3>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <Label className="text-sm font-medium">Add Concepts (Tags)</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="e.g., Linear Equations"
+                        value={newConcept}
+                        onChange={(e) => setNewConcept(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addConcept())}
+                        disabled={isSubmitting}
+                        className="h-12"
+                      />
+                      <Button 
+                        type="button" 
+                        onClick={addConcept} 
+                        variant="outline" 
+                        disabled={isSubmitting}
+                        className="h-12 px-6"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {formData.concepts.length > 0 && (
+                      <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-lg border">
+                        {formData.concepts.map(concept => (
+                          <Badge 
+                            key={concept} 
+                            variant="secondary" 
+                            className="cursor-pointer hover:bg-red-100 transition-colors px-3 py-1 text-sm"
+                            onClick={() => !isSubmitting && removeConcept(concept)}
+                          >
+                            {concept}
+                            <X className="h-3 w-3 ml-1" />
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label className="text-sm font-medium">Difficulty Level</Label>
+                    <Select 
+                      value={formData.difficulty} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, difficulty: value }))}
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger className="h-12">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {difficulties.map(difficulty => (
+                          <SelectItem key={difficulty} value={difficulty}>
+                            <div className="flex items-center gap-3">
+                              <div className={`w-3 h-3 rounded-full ${
+                                difficulty === 'easy' ? 'bg-green-500' :
+                                difficulty === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
+                              }`} />
+                              <span className="capitalize font-medium">{difficulty}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {formData.difficulty && (
+                      <div className={`p-4 rounded-lg border ${getDifficultyColor(formData.difficulty)}`}>
+                        <div className="flex items-center gap-2">
+                          <Target className="h-4 w-4" />
+                          <span className="text-sm font-medium">
+                            {formData.difficulty === 'easy' && 'Beginner-friendly content'}
+                            {formData.difficulty === 'medium' && 'Intermediate level content'}
+                            {formData.difficulty === 'hard' && 'Advanced level content'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <Separator />
 
-              <ContentFormActions
-                handleSubmit={handleSubmit}
-                handlePublish={handlePublish}
-                isSubmitting={isSubmitting}
-              />
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-4 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleSubmit} 
+                  disabled={isSubmitting}
+                  className="h-12 px-8 text-base font-medium"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSubmitting ? 'Saving...' : 'Save as Draft'}
+                </Button>
+                <Button 
+                  type="button" 
+                  onClick={handlePublish} 
+                  disabled={isSubmitting}
+                  className="h-12 px-8 text-base font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  {isSubmitting ? 'Publishing...' : 'Publish Content'}
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
