@@ -1,3 +1,4 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { ThemeToggle } from "./ThemeToggle";
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -25,20 +26,28 @@ function LayoutContent({ children }: LayoutProps) {
   const { signOut, profile } = useAuth();
   const { toggleSidebar } = useSidebar();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     await signOut();
   };
 
   useEffect(() => {
+    // Prevent redirect loops: Only redirect instructors to '/instructor' when they're on '/'.
     if (profile) {
-      if (profile.role === 'instructor') {
-        navigate('/instructor');
-      } else {
-        navigate('/');
+      if (
+        profile.role === "instructor" &&
+        (location.pathname === "/" || location.pathname === "/index")
+      ) {
+        navigate("/instructor", { replace: true });
+      }
+      // No automatic redirect for instructor on other subroutes.
+      else if (profile.role !== "instructor" && location.pathname === "/instructor") {
+        // Non-instructor profile on instructor route goes to home (or their allowed default)
+        navigate("/", { replace: true });
       }
     }
-  }, [profile, navigate]);
+  }, [profile, navigate, location.pathname]);
 
   return (
     <div className="min-h-screen flex w-full bg-background">
@@ -116,3 +125,4 @@ export function Layout({ children }: LayoutProps) {
     </SidebarProvider>
   );
 }
+
