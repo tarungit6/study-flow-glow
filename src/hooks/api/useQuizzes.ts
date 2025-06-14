@@ -7,6 +7,7 @@ type Quiz = Database['public']['Tables']['quiz_definitions']['Row'];
 type QuizInsert = Database['public']['Tables']['quiz_definitions']['Insert'];
 type QuizUpdate = Database['public']['Tables']['quiz_definitions']['Update'];
 type QuizQuestion = Database['public']['Tables']['quiz_questions']['Row'];
+type QuizQuestionInsert = Database['public']['Tables']['quiz_questions']['Insert'];
 type QuizAttempt = Database['public']['Tables']['quiz_attempts']['Row'];
 type QuizAttemptInsert = Database['public']['Tables']['quiz_attempts']['Insert'];
 
@@ -66,15 +67,15 @@ export const useQuizzes = (userId?: string) => {
 
   // Create a new quiz
   const createQuiz = useMutation({
-    mutationFn: async ({ 
-      quiz, 
-      questions 
-    }: { 
-      quiz: Omit<QuizInsert, 'created_by'>; 
-      questions: Omit<QuizQuestion, 'quiz_id'>[];
+    mutationFn: async ({
+      quiz,
+      questions
+    }: {
+      quiz: Omit<QuizInsert, 'created_by'>;
+      questions: Omit<QuizQuestionInsert, 'quiz_id'>[];
     }) => {
       if (!userId) throw new Error('No user ID provided');
-      
+
       // Start a transaction
       const { data: quizData, error: quizError } = await supabase
         .from('quiz_definitions')
@@ -86,6 +87,7 @@ export const useQuizzes = (userId?: string) => {
         .single();
 
       if (quizError) throw quizError;
+      if (!quizData) throw new Error('Quiz creation failed, no data returned.');
 
       // Insert questions
       const { error: questionsError } = await supabase
@@ -98,7 +100,11 @@ export const useQuizzes = (userId?: string) => {
           }))
         );
 
-      if (questionsError) throw questionsError;
+      if (questionsError) {
+        // Optional: Attempt to delete the created quiz definition if questions fail
+        // await supabase.from('quiz_definitions').delete().match({ id: quizData.id });
+        throw questionsError;
+      }
 
       return quizData as Quiz;
     },
@@ -107,7 +113,11 @@ export const useQuizzes = (userId?: string) => {
       toast.success('Quiz created successfully!');
     },
     onError: (error) => {
-      toast.error(error.message);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('An unknown error occurred.');
+      }
     },
   });
 
