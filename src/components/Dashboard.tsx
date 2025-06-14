@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OverviewTab } from "./dashboard/OverviewTab";
 import { CoursesTab } from "./dashboard/CoursesTab";
@@ -6,18 +5,25 @@ import { GamifyTab } from "./dashboard/GamifyTab";
 import { CommunityTab } from "./dashboard/CommunityTab";
 import { WelcomeHeader } from "./dashboard/WelcomeHeader";
 
+const tabs = [
+  { id: "overview", label: "Overview" },
+  { id: "courses", label: "Courses" },
+  { id: "gamify", label: "Gamify" },
+  { id: "community", label: "Community" }
+] as const;
+
 export function Dashboard() {
   return (
-    <div className="space-y-6 animate-fade-in">
+    <main className="space-y-6 animate-fade-in">
       <WelcomeHeader />
 
-      {/* Main Dashboard Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 max-w-md">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="courses">Courses</TabsTrigger>
-          <TabsTrigger value="gamify">Gamify</TabsTrigger>
-          <TabsTrigger value="community">Community</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 max-w-md" aria-label="Dashboard sections">
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.id} value={tab.id}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
         
         <TabsContent value="overview">
@@ -36,6 +42,6 @@ export function Dashboard() {
           <CommunityTab />
         </TabsContent>
       </Tabs>
-    </div>
+    </main>
   );
 }
