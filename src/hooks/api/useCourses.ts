@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
@@ -10,6 +9,28 @@ export const useCourses = () => {
   return useQuery({
     queryKey: ['courses'],
     queryFn: async () => {
+      console.log('Fetching courses...');
+      
+      // First, let's check all courses regardless of published status
+      const { data: allCoursesData, error: allCoursesError } = await supabase
+        .from('courses')
+        .select(`
+          *,
+          instructor:profiles(full_name),
+          enrollments(id, status),
+          course_modules(
+            id,
+            title,
+            order_index,
+            course_lessons(id, title)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      console.log('All courses in database:', allCoursesData);
+      console.log('All courses error:', allCoursesError);
+
+      // Now get only published courses
       const { data, error } = await supabase
         .from('courses')
         .select(`
@@ -25,6 +46,9 @@ export const useCourses = () => {
         `)
         .eq('is_published', true)
         .order('created_at', { ascending: false });
+
+      console.log('Published courses:', data);
+      console.log('Published courses error:', error);
 
       if (error) throw error;
       return data;
