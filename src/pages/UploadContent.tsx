@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,11 +8,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Youtube, Upload, Tag, BookOpen, GraduationCap, Target } from 'lucide-react';
+import { Youtube, Upload, Tag, BookOpen, Target } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext'; // Added useAuth
 
 export default function UploadContent() {
   const { toast } = useToast();
+  const { user, profile } = useAuth(); // Added useAuth to get user
+  const [isSubmitting, setIsSubmitting] = useState(false); // Added for loading state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -22,7 +25,8 @@ export default function UploadContent() {
     gradeLevel: '',
     topic: '',
     difficulty: 'medium',
-    concepts: [] as string[]
+    concepts: [] as string[],
+    contentType: 'video', // Added contentType, default to video
   });
   const [newConcept, setNewConcept] = useState('');
 
@@ -30,6 +34,7 @@ export default function UploadContent() {
   const gradeLevels = ['Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
   const topics = ['Algebra', 'Geometry', 'Trigonometry', 'Calculus']; // This would be filtered by subject
   const difficulties = ['easy', 'medium', 'hard'];
+  const contentTypes = ['video', 'document', 'article', 'quiz_link']; // Added content types
 
   const addConcept = () => {
     if (newConcept.trim() && !formData.concepts.includes(newConcept.trim())) {
@@ -48,25 +53,120 @@ export default function UploadContent() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here we would submit to the backend
-    toast({
-      title: "Content Uploaded Successfully",
-      description: "Your educational content has been added and is now available to students.",
-    });
-    
-    // Reset form
-    setFormData({
-      title: '',
-      description: '',
-      url: '',
-      subject: '',
-      gradeLevel: '',
-      topic: '',
-      difficulty: 'medium',
-      concepts: []
-    });
+    if (!user || profile?.role !== 'instructor') {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in as an instructor to upload content.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const newContent = {
+      instructor_id: user.id,
+      title: formData.title,
+      description: formData.description,
+      url: formData.url,
+      content_type: formData.contentType,
+      subject: formData.subject,
+      grade_level: formData.gradeLevel,
+      topic: formData.topic,
+      difficulty: formData.difficulty,
+      concepts: formData.concepts,
+      is_published: false, // Default to not published, can be changed with "Publish Content" button
+    };
+
+    const { error } = await supabase.from('educational_content').insert([newContent]);
+
+    setIsSubmitting(false);
+
+    if (error) {
+      console.error('Error uploading content:', error);
+      toast({
+        title: "Upload Failed",
+        description: `There was an error: ${error.message}`,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Content Uploaded Successfully",
+        description: "Your educational content has been saved as a draft.",
+      });
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        url: '',
+        subject: '',
+        gradeLevel: '',
+        topic: '',
+        difficulty: 'medium',
+        concepts: [],
+        contentType: 'video',
+      });
+    }
+  };
+  
+  const handlePublish = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || profile?.role !== 'instructor') {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in as an instructor to publish content.",
+        variant: "destructive",
+      });
+      return;
+    }
+  
+    setIsSubmitting(true);
+  
+    const contentToPublish = {
+      instructor_id: user.id,
+      title: formData.title,
+      description: formData.description,
+      url: formData.url,
+      content_type: formData.contentType,
+      subject: formData.subject,
+      grade_level: formData.gradeLevel,
+      topic: formData.topic,
+      difficulty: formData.difficulty,
+      concepts: formData.concepts,
+      is_published: true, 
+    };
+  
+    const { error } = await supabase.from('educational_content').insert([contentToPublish]);
+  
+    setIsSubmitting(false);
+  
+    if (error) {
+      console.error('Error publishing content:', error);
+      toast({
+        title: "Publish Failed",
+        description: `There was an error: ${error.message}`,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Content Published Successfully",
+        description: "Your educational content has been published and is now available.",
+      });
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        url: '',
+        subject: '',
+        gradeLevel: '',
+        topic: '',
+        difficulty: 'medium',
+        concepts: [],
+        contentType: 'video',
+      });
+    }
   };
 
   return (
@@ -93,7 +193,7 @@ export default function UploadContent() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form className="space-y-6"> {/* Removed onSubmit from form tag, will use button-specific handlers */}
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -104,18 +204,40 @@ export default function UploadContent() {
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="url">YouTube URL</Label>
+                  <Label htmlFor="url">Content URL (e.g., YouTube)</Label>
                   <Input
                     id="url"
                     placeholder="https://www.youtube.com/watch?v=..."
                     value={formData.url}
                     onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                    required
+                    type="url" // Added type url for better validation
+                    disabled={isSubmitting}
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="contentType">Content Type</Label>
+                <Select 
+                  value={formData.contentType} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, contentType: value }))}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select content type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {contentTypes.map(type => (
+                      <SelectItem key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -126,6 +248,7 @@ export default function UploadContent() {
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -141,7 +264,11 @@ export default function UploadContent() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Subject</Label>
-                    <Select value={formData.subject} onValueChange={(value) => setFormData(prev => ({ ...prev, subject: value }))}>
+                    <Select 
+                      value={formData.subject} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, subject: value }))}
+                      disabled={isSubmitting}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select subject" />
                       </SelectTrigger>
@@ -155,7 +282,11 @@ export default function UploadContent() {
 
                   <div className="space-y-2">
                     <Label>Grade Level</Label>
-                    <Select value={formData.gradeLevel} onValueChange={(value) => setFormData(prev => ({ ...prev, gradeLevel: value }))}>
+                    <Select 
+                      value={formData.gradeLevel} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, gradeLevel: value }))}
+                      disabled={isSubmitting}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select grade" />
                       </SelectTrigger>
@@ -169,11 +300,16 @@ export default function UploadContent() {
 
                   <div className="space-y-2">
                     <Label>Topic</Label>
-                    <Select value={formData.topic} onValueChange={(value) => setFormData(prev => ({ ...prev, topic: value }))}>
+                    <Select 
+                      value={formData.topic} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, topic: value }))}
+                      disabled={isSubmitting}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select topic" />
                       </SelectTrigger>
                       <SelectContent>
+                        {/* TODO: Filter topics based on selected subject */}
                         {topics.map(topic => (
                           <SelectItem key={topic} value={topic}>{topic}</SelectItem>
                         ))}
@@ -182,6 +318,7 @@ export default function UploadContent() {
                   </div>
                 </div>
               </div>
+
 
               <Separator />
 
@@ -201,15 +338,16 @@ export default function UploadContent() {
                         value={newConcept}
                         onChange={(e) => setNewConcept(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addConcept())}
+                        disabled={isSubmitting}
                       />
-                      <Button type="button" onClick={addConcept} variant="outline">
+                      <Button type="button" onClick={addConcept} variant="outline" disabled={isSubmitting}>
                         Add
                       </Button>
                     </div>
                     {formData.concepts.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
                         {formData.concepts.map(concept => (
-                          <Badge key={concept} variant="secondary" className="cursor-pointer" onClick={() => removeConcept(concept)}>
+                          <Badge key={concept} variant="secondary" className="cursor-pointer" onClick={() => !isSubmitting && removeConcept(concept)}>
                             {concept} ×
                           </Badge>
                         ))}
@@ -219,7 +357,11 @@ export default function UploadContent() {
 
                   <div className="space-y-2">
                     <Label>Difficulty Level</Label>
-                    <Select value={formData.difficulty} onValueChange={(value) => setFormData(prev => ({ ...prev, difficulty: value }))}>
+                    <Select 
+                      value={formData.difficulty} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, difficulty: value }))}
+                      disabled={isSubmitting}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -245,8 +387,12 @@ export default function UploadContent() {
 
               {/* Submit */}
               <div className="flex justify-end gap-3">
-                <Button type="button" variant="outline">Save as Draft</Button>
-                <Button type="submit">Publish Content</Button>
+                <Button type="button" variant="outline" onClick={handleSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? 'Saving...' : 'Save as Draft'}
+                </Button>
+                <Button type="button" onClick={handlePublish} disabled={isSubmitting}> {/* Changed to type="button" and added onClick */}
+                  {isSubmitting ? 'Publishing...' : 'Publish Content'}
+                </Button>
               </div>
             </form>
           </CardContent>
