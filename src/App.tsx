@@ -1,9 +1,8 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -55,33 +54,31 @@ const App = () => (
                 <Schedule />
               </ProtectedRoute>
             } />
-            
+
             {/* Role-specific routes */}
             <Route path="/admin" element={
               <ProtectedRoute allowedRoles={['super_admin', 'client_admin']}>
                 <AdminDashboard />
               </ProtectedRoute>
             } />
-            
-            <Route path="/instructor" element={
-              <ProtectedRoute allowedRoles={['instructor']}>
-                <InstructorDashboard />
-              </ProtectedRoute>
-            } />
-            
-            {/* Instructor sub-routes */}
-            <Route path="/instructor/upload" element={
-              <ProtectedRoute allowedRoles={['instructor']}>
-                <UploadContent />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/instructor/tests" element={
-              <ProtectedRoute allowedRoles={['instructor']}>
-                <CreateTest />
-              </ProtectedRoute>
-            } />
-            
+
+            {/* INSTRUCTOR DASHBOARD with nested routes */}
+            <Route
+              path="/instructor"
+              element={
+                <ProtectedRoute allowedRoles={['instructor']}>
+                  <InstructorDashboard />
+                </ProtectedRoute>
+              }
+            >
+              {/* Index (overview) */}
+              <Route index element={<></>} /> 
+              {/* Nested pages (UploadContent and CreateTest) */}
+              <Route path="upload" element={<UploadContent />} />
+              <Route path="tests" element={<CreateTest />} />
+            </Route>
+            {/* Note: No longer mounting UploadContent/CreateTest at root level */}
+
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
