@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,11 +8,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Plus, FileText, Trash2, Clock, Target, BookOpen } from 'lucide-react';
+import { Plus, FileText, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useQuizzes } from '@/hooks/api/useQuizzes';
+import { Database } from '@/integrations/supabase/types';
+
+type QuizDefinitionInsert = Database['public']['Tables']['quiz_definitions']['Insert'];
+type QuizQuestionInsert = Database['public']['Tables']['quiz_questions']['Insert'];
 
 interface Question {
-  id: string;
+  id: string; // client-side ID
   text: string;
   type: 'multiple_choice' | 'true_false';
   options: string[];
@@ -23,34 +28,40 @@ interface Question {
   concept: string;
 }
 
-export default function CreateTest() {
-  const { toast } = useToast();
-  const [testData, setTestData] = useState({
-    title: '',
-    description: '',
-    subject: '',
-    gradeLevel: '',
-    topic: '',
-    difficulty: 'medium',
-    timeLimit: 60,
-    instructions: ''
-  });
+const initialTestData = {
+  title: '',
+  description: '',
+  subject: '',
+  gradeLevel: '',
+  topic: '',
+  difficulty: 'medium',
+  timeLimit: 60,
+  instructions: ''
+};
 
+const initialCurrentQuestion: Partial<Question> = {
+  text: '',
+  type: 'multiple_choice',
+  options: ['', '', '', ''],
+  correctAnswer: '',
+  explanation: '',
+  marks: 1,
+  concept: ''
+};
+
+export default function CreateTest() {
+  const { toast } = useToast(); // For local UI feedback
+  const { user } = useAuth();
+  const { createQuiz, isLoading: isSubmittingQuiz } = useQuizzes(user?.id);
+
+  const [testData, setTestData] = useState(initialTestData);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentQuestion, setCurrentQuestion] = useState<Partial<Question>>({
-    text: '',
-    type: 'multiple_choice',
-    options: ['', '', '', ''],
-    correctAnswer: '',
-    explanation: '',
-    marks: 1,
-    concept: ''
-  });
+  const [currentQuestion, setCurrentQuestion] = useState<Partial<Question>>(initialCurrentQuestion);
 
   const subjects = ['Mathematics', 'Science', 'English', 'History', 'Computer Science'];
   const gradeLevels = ['Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
-  const topics = ['Algebra', 'Geometry', 'Trigonometry', 'Calculus'];
-  const concepts = ['Linear Equations', 'Quadratic Equations', 'Factoring', 'Systems of Equations'];
+  const topics = ['Algebra', 'Geometry', 'Trigonometry', 'Calculus']; // Example, can be dynamic
+  const concepts = ['Linear Equations', 'Quadratic Equations', 'Factoring', 'Systems of Equations']; // Example
 
   const addQuestion = () => {
     if (!currentQuestion.text || !currentQuestion.correctAnswer) {
@@ -74,15 +85,7 @@ export default function CreateTest() {
     };
 
     setQuestions(prev => [...prev, newQuestion]);
-    setCurrentQuestion({
-      text: '',
-      type: 'multiple_choice',
-      options: ['', '', '', ''],
-      correctAnswer: '',
-      explanation: '',
-      marks: 1,
-      concept: ''
-    });
+    setCurrentQuestion(initialCurrentQuestion);
 
     toast({
       title: "Question Added",
@@ -100,8 +103,15 @@ export default function CreateTest() {
     setCurrentQuestion(prev => ({ ...prev, options: newOptions }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFormSubmit = async (publish: boolean) => {
+    if (!user) {
+      toast({ title: "Error", description: "You must be logged in to create a test.", variant: "destructive" });
+      return;
+    }
+    if (!testData.title.trim()) {
+      toast({ title: "Error", description: "Test title is required.", variant: "destructive" });
+      return;
+    }
     if (questions.length === 0) {
       toast({
         title: "Error",
@@ -111,23 +121,47 @@ export default function CreateTest() {
       return;
     }
 
-    toast({
-      title: "Test Created Successfully",
-      description: `Test "${testData.title}" with ${questions.length} questions has been created.`,
-    });
+    const quizPayload: Omit<QuizDefinitionInsert, 'created_by' | 'id' | 'created_at' | 'updated_at'> = {
+      title: testData.title,
+      description: testData.description || null,
+      subject: testData.subject || null,
+      grade_level: testData.gradeLevel || null,
+      topic: testData.topic || null,
+      difficulty: testData.difficulty || null,
+      time_limit_minutes: testData.timeLimit,
+      instructions: testData.instructions || null,
+      status: publish ? 'published' : 'draft',
+      // course_id: null, // Assuming not linking to a course for now, can be added
+      // passing_score: 70, // Default, or make it configurable
+      // max_attempts: 1, // Default, or make it configurable
+    };
 
-    // Reset form
-    setTestData({
-      title: '',
-      description: '',
-      subject: '',
-      gradeLevel: '',
-      topic: '',
-      difficulty: 'medium',
-      timeLimit: 60,
-      instructions: ''
-    });
-    setQuestions([]);
+    const questionsPayload: Omit<QuizQuestionInsert, 'quiz_id' | 'id' | 'created_at'>[] = questions.map((q, index) => ({
+      question_text: q.text,
+      question_type: q.type, // Ensure q.type matches DB enum values ('multiple_choice', 'true_false')
+      options: q.options, // JSONB in DB, string[] is fine. For T/F, this will be ['True', 'False']
+      correct_answer: q.correctAnswer,
+      explanation: q.explanation || null,
+      points: q.marks,
+      concept: q.concept || null,
+      order_index: index,
+    }));
+    
+    console.log('Submitting quiz:', quizPayload);
+    console.log('Submitting questions:', questionsPayload);
+
+    try {
+      await createQuiz.mutateAsync({ quiz: quizPayload, questions: questionsPayload });
+      // Success toast is handled by useQuizzes hook
+      setTestData(initialTestData);
+      setQuestions([]);
+      setCurrentQuestion(initialCurrentQuestion);
+    } catch (error) {
+      // Error toast is handled by useQuizzes hook
+      console.error("Failed to create test:", error);
+      // Optionally, show a specific error toast here if the hook's isn't sufficient
+      // toast({ title: "Submission Error", description: "Could not save the test. Please try again.", variant: "destructive" });
+    }
   };
 
   return (
@@ -144,7 +178,6 @@ export default function CreateTest() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Test Configuration */}
           <Card>
             <CardHeader>
               <CardTitle>Test Configuration</CardTitle>
@@ -159,6 +192,7 @@ export default function CreateTest() {
                     placeholder="e.g., Algebra Fundamentals Quiz"
                     value={testData.title}
                     onChange={(e) => setTestData(prev => ({ ...prev, title: e.target.value }))}
+                    disabled={isSubmittingQuiz}
                   />
                 </div>
 
@@ -170,13 +204,18 @@ export default function CreateTest() {
                     value={testData.description}
                     onChange={(e) => setTestData(prev => ({ ...prev, description: e.target.value }))}
                     rows={2}
+                    disabled={isSubmittingQuiz}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Subject</Label>
-                    <Select value={testData.subject} onValueChange={(value) => setTestData(prev => ({ ...prev, subject: value }))}>
+                    <Select 
+                      value={testData.subject} 
+                      onValueChange={(value) => setTestData(prev => ({ ...prev, subject: value }))}
+                      disabled={isSubmittingQuiz}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
@@ -190,7 +229,11 @@ export default function CreateTest() {
 
                   <div className="space-y-2">
                     <Label>Grade Level</Label>
-                    <Select value={testData.gradeLevel} onValueChange={(value) => setTestData(prev => ({ ...prev, gradeLevel: value }))}>
+                    <Select 
+                      value={testData.gradeLevel} 
+                      onValueChange={(value) => setTestData(prev => ({ ...prev, gradeLevel: value }))}
+                      disabled={isSubmittingQuiz}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
@@ -206,7 +249,11 @@ export default function CreateTest() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Topic</Label>
-                    <Select value={testData.topic} onValueChange={(value) => setTestData(prev => ({ ...prev, topic: value }))}>
+                    <Select 
+                      value={testData.topic} 
+                      onValueChange={(value) => setTestData(prev => ({ ...prev, topic: value }))}
+                      disabled={isSubmittingQuiz}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
@@ -219,13 +266,32 @@ export default function CreateTest() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Time Limit (minutes)</Label>
-                    <Input
-                      type="number"
-                      value={testData.timeLimit}
-                      onChange={(e) => setTestData(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 60 }))}
-                    />
+                    <Label>Difficulty</Label>
+                    <Select 
+                      value={testData.difficulty} 
+                      onValueChange={(value) => setTestData(prev => ({ ...prev, difficulty: value }))}
+                      disabled={isSubmittingQuiz}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select difficulty" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="easy">Easy</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="hard">Hard</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Time Limit (minutes)</Label>
+                  <Input
+                    type="number"
+                    value={testData.timeLimit}
+                    onChange={(e) => setTestData(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 60 }))}
+                    disabled={isSubmittingQuiz}
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -235,13 +301,13 @@ export default function CreateTest() {
                     value={testData.instructions}
                     onChange={(e) => setTestData(prev => ({ ...prev, instructions: e.target.value }))}
                     rows={2}
+                    disabled={isSubmittingQuiz}
                   />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Add Question */}
           <Card>
             <CardHeader>
               <CardTitle>Add Question</CardTitle>
@@ -255,6 +321,7 @@ export default function CreateTest() {
                   value={currentQuestion.text}
                   onChange={(e) => setCurrentQuestion(prev => ({ ...prev, text: e.target.value }))}
                   rows={2}
+                  disabled={isSubmittingQuiz}
                 />
               </div>
 
@@ -267,9 +334,11 @@ export default function CreateTest() {
                       setCurrentQuestion(prev => ({ 
                         ...prev, 
                         type: value,
-                        options: value === 'true_false' ? ['True', 'False'] : ['', '', '', '']
+                        options: value === 'multiple_choice' ? prev.options?.length === 4 ? prev.options : ['', '', '', ''] : ['True', 'False'],
+                        correctAnswer: '' // Reset correct answer when type changes
                       }))
                     }
+                    disabled={isSubmittingQuiz}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -288,6 +357,7 @@ export default function CreateTest() {
                     min="1"
                     value={currentQuestion.marks}
                     onChange={(e) => setCurrentQuestion(prev => ({ ...prev, marks: parseInt(e.target.value) || 1 }))}
+                    disabled={isSubmittingQuiz}
                   />
                 </div>
               </div>
@@ -301,6 +371,7 @@ export default function CreateTest() {
                       placeholder={`Option ${index + 1}`}
                       value={option}
                       onChange={(e) => updateQuestionOption(index, e.target.value)}
+                      disabled={isSubmittingQuiz}
                     />
                   ))}
                 </div>
@@ -312,13 +383,14 @@ export default function CreateTest() {
                   <Select 
                     value={currentQuestion.correctAnswer} 
                     onValueChange={(value) => setCurrentQuestion(prev => ({ ...prev, correctAnswer: value }))}
+                    disabled={isSubmittingQuiz || !currentQuestion.options?.some(opt => opt.trim() !== '')}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select correct answer" />
                     </SelectTrigger>
                     <SelectContent>
                       {currentQuestion.options?.map((option, index) => 
-                        option && (
+                        option && option.trim() !== '' && ( // Ensure option is not empty
                           <SelectItem key={index} value={option}>
                             {option}
                           </SelectItem>
@@ -326,10 +398,11 @@ export default function CreateTest() {
                       )}
                     </SelectContent>
                   </Select>
-                ) : (
+                ) : ( // True/False
                   <Select 
                     value={currentQuestion.correctAnswer} 
                     onValueChange={(value) => setCurrentQuestion(prev => ({ ...prev, correctAnswer: value }))}
+                    disabled={isSubmittingQuiz}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select correct answer" />
@@ -347,6 +420,7 @@ export default function CreateTest() {
                 <Select 
                   value={currentQuestion.concept} 
                   onValueChange={(value) => setCurrentQuestion(prev => ({ ...prev, concept: value }))}
+                  disabled={isSubmittingQuiz}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select concept" />
@@ -366,10 +440,11 @@ export default function CreateTest() {
                   value={currentQuestion.explanation}
                   onChange={(e) => setCurrentQuestion(prev => ({ ...prev, explanation: e.target.value }))}
                   rows={2}
+                  disabled={isSubmittingQuiz}
                 />
               </div>
 
-              <Button onClick={addQuestion} className="w-full">
+              <Button onClick={addQuestion} className="w-full" disabled={isSubmittingQuiz}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Question
               </Button>
@@ -377,7 +452,6 @@ export default function CreateTest() {
           </Card>
         </div>
 
-        {/* Questions List */}
         {questions.length > 0 && (
           <Card>
             <CardHeader>
@@ -429,6 +503,7 @@ export default function CreateTest() {
                         size="sm"
                         onClick={() => removeQuestion(question.id)}
                         className="text-red-600 hover:text-red-700"
+                        disabled={isSubmittingQuiz} // Disable if a submission is in progress
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -444,8 +519,19 @@ export default function CreateTest() {
                   Total Questions: {questions.length} | Total Marks: {questions.reduce((sum, q) => sum + q.marks, 0)}
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="outline">Save as Draft</Button>
-                  <Button onClick={handleSubmit}>Publish Test</Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleFormSubmit(false)} 
+                    disabled={isSubmittingQuiz || questions.length === 0 || !testData.title.trim()}
+                  >
+                    {isSubmittingQuiz ? 'Saving...' : 'Save as Draft'}
+                  </Button>
+                  <Button 
+                    onClick={() => handleFormSubmit(true)} 
+                    disabled={isSubmittingQuiz || questions.length === 0 || !testData.title.trim()}
+                  >
+                    {isSubmittingQuiz ? 'Publishing...' : 'Publish Test'}
+                  </Button>
                 </div>
               </div>
             </CardContent>
