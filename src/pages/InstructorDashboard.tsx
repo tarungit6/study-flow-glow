@@ -21,10 +21,14 @@ export default function InstructorDashboard() {
         </div>
         
         <InstructorNav />
-        {isIndex && <InstructorOverview />}
-        {/* Render nested routes */}
-        <Outlet />
+        {isIndex ? (
+          <InstructorOverview />
+        ) : (
+          <Outlet />
+        )}
+        {/* Only one of overview or the nested page will show at a time */}
       </div>
     </Layout>
   );
 }
+
