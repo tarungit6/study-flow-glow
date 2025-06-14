@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAssignments } from '@/hooks/api/useAssignments'; // Assuming this hook exists
+import { useAssignments } from '@/hooks/api/useAssignments';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, FileText } from 'lucide-react';
@@ -10,13 +10,12 @@ import { formatDistanceToNow } from 'date-fns';
 const statusColors: { [key: string]: string } = {
   Pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
   Submitted: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  Graded: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200', // Added Graded
-  Overdue: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200', // Added Overdue
+  Graded: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  Overdue: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
 };
 
 export default function Assignments() {
-  // Assuming useAssignments fetches { id, title, course: { title }, due_date, status }
-  const { data: fetchedAssignments, isLoading, error } = useAssignments();
+  const { assignments, isLoading, error } = useAssignments();
 
   if (isLoading) {
     return (
@@ -59,14 +58,13 @@ export default function Assignments() {
     );
   }
 
-  const assignments = fetchedAssignments?.map(a => ({
+  const assignmentsList = assignments?.map(a => ({
     id: a.id,
     title: a.title,
-    course: a.course?.title || 'N/A', // Assuming course is an object with title
+    course: a.course?.title || 'N/A',
     due: a.due_date ? formatDistanceToNow(new Date(a.due_date), { addSuffix: true }) : 'N/A',
-    status: a.status || 'Pending', // Default to Pending if status is not available
+    status: a.status || 'published',
   })) || [];
-
 
   return (
     <div className="p-6 space-y-8">
@@ -75,7 +73,7 @@ export default function Assignments() {
         <Link to="/" className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition">Back to Home</Link>
       </div>
       <div className="bg-card text-card-foreground rounded-xl shadow p-6">
-        {assignments.length === 0 && !isLoading ? (
+        {assignmentsList.length === 0 && !isLoading ? (
           <Alert>
             <FileText className="h-4 w-4" />
             <AlertTitle>No Assignments</AlertTitle>
@@ -95,7 +93,7 @@ export default function Assignments() {
               </tr>
             </thead>
             <tbody>
-              {assignments.map((a) => (
+              {assignmentsList.map((a) => (
                 <tr key={a.id} className="border-t">
                   <td className="py-3 font-medium text-card-foreground">{a.title}</td>
                   <td className="py-3 text-muted-foreground">{a.course}</td>
@@ -106,9 +104,8 @@ export default function Assignments() {
                     </span>
                   </td>
                   <td className="py-3">
-                    {/* TODO: Implement Submit/View functionality and link */}
                     <button className="px-3 py-1 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition text-xs">
-                      {a.status === 'Pending' ? 'Submit' : 'View'}
+                      {a.status === 'published' ? 'Submit' : 'View'}
                     </button>
                   </td>
                 </tr>

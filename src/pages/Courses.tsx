@@ -6,7 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 
-// Mapping difficulty to badge colors, assuming a similar structure as before
 const difficultyBadgeColors = (difficulty: string | null | undefined) => {
   switch (difficulty?.toLowerCase()) {
     case 'hard':
@@ -20,7 +19,6 @@ const difficultyBadgeColors = (difficulty: string | null | undefined) => {
   }
 };
 
-// Mapping course category to a color, simple hashing for variety
 const categoryColors = (category: string | null | undefined) => {
   if (!category) return 'bg-gray-100 dark:bg-gray-800';
   const hash = category.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
@@ -34,7 +32,6 @@ const categoryColors = (category: string | null | undefined) => {
   ];
   return colors[Math.abs(hash) % colors.length];
 };
-
 
 export default function Courses() {
   const { data: enrollments, isLoading, error } = useEnrollments();
@@ -78,13 +75,12 @@ export default function Courses() {
   const courses = enrollments?.map(enrollment => ({
     id: enrollment.course.id,
     title: enrollment.course.title,
-    // Assuming instructor is an object with full_name, or just a string
     instructor: typeof enrollment.course.instructor === 'object' 
                   ? enrollment.course.instructor?.full_name || 'N/A' 
                   : enrollment.course.instructor || 'N/A',
     progress: enrollment.progress_percentage ? Number(enrollment.progress_percentage) : 0,
-    color: categoryColors(enrollment.course.category), // Use category from course data
-    badge: enrollment.course.difficulty_level || 'Medium', // Use difficulty_level
+    color: categoryColors('General'), // Default category since it's not available in the course data
+    badge: 'Medium', // Default difficulty since it's not available in the course data
   })) || [];
 
   return (
@@ -116,7 +112,6 @@ export default function Courses() {
                 <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${course.progress}%` }}></div>
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-300">Progress: {course.progress}%</div>
-              {/* TODO: Link to actual course page */}
               <Link to={`/courses/${course.id}`} className="mt-2 text-center px-3 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm">
                 Go to Course
               </Link>

@@ -1,232 +1,180 @@
-import {
-  Calendar,
-  Clock,
-  Layers,
-  ListTodo,
-  LayoutDashboard,
-  Upload,
-  FileText,
-  BarChart3,
-  Settings,
-  ShieldAlert,
-  Users,
-  BookOpen,
-  FilePieChart,
-  LucideIcon,
-} from "lucide-react";
-import { NavLink } from "react-router-dom";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-} from "@/components/ui/sidebar";
-import { Badge } from "@/components/ui/badge";
+import * as React from "react";
+import { Calendar, Home, Inbox, Search, Settings, BookOpen, Users, Target, Trophy, Bell } from "lucide-react";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
-import { Skeleton } from "@/components/ui/skeleton"; // For loading state
-import { useAssignments } from "@/hooks/api/useAssignments"; 
-import { useEnrollments } from "@/hooks/api/useCourses";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useAssignments } from "@/hooks/api/useAssignments";
+import { useNotifications } from "@/hooks/api/useNotifications";
 
-interface MenuItem {
-  title: string;
-  url: string;
-  icon: LucideIcon;
-  badge?: string | number | null; // Allow number for dynamic badges
-}
+const data = {
+  user: {
+    name: "John Doe",
+    email: "john@example.com",
+    avatar: "/avatars/john-doe.jpg",
+  },
+  navMain: [
+    {
+      title: "Dashboard",
+      url: "/",
+      icon: Home,
+    },
+    {
+      title: "Courses",
+      url: "/courses",
+      icon: BookOpen,
+    },
+    {
+      title: "Browse Courses",
+      url: "/browse-courses",
+      icon: Search,
+    },
+    {
+      title: "Assignments",
+      url: "/assignments",
+      icon: Inbox,
+    },
+    {
+      title: "Schedule",
+      url: "/schedule", 
+      icon: Calendar,
+    },
+    {
+      title: "Community",
+      url: "/community",
+      icon: Users,
+    },
+    {
+      title: "Goals",
+      url: "/goals",
+      icon: Target,
+    },
+    {
+      title: "Achievements",
+      url: "/achievements",
+      icon: Trophy,
+    },
+  ],
+};
 
-export function AppSidebar() {
-  const { profile, loading: authLoading } = useAuth();
-  
-  // Fetch data for badges - assuming these hooks fetch for the current user
-  const { data: enrollments, isLoading: enrollmentsLoading } = useEnrollments();
-  // Assuming useAssignments returns assignments with a 'status' field
-  const { data: assignmentsData, isLoading: assignmentsLoading } = useAssignments();
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { profile, signOut } = useAuth();
+  const { assignments, isLoading: assignmentsLoading } = useAssignments();
+  const { data: notifications, isLoading: notificationsLoading } = useNotifications();
 
-  const loading = authLoading || enrollmentsLoading || assignmentsLoading;
+  // Calculate pending assignments count
+  const pendingAssignments = React.useMemo(() => {
+    if (!assignments || assignmentsLoading) return 0;
+    return assignments.filter(a => a.status === 'published').length;
+  }, [assignments, assignmentsLoading]);
 
-  if (loading) {
-    return (
-      <Sidebar className="border-r">
-        <SidebarHeader>
-          <div className="px-4 py-2">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-8 w-8 rounded-lg" />
-              <div>
-                <Skeleton className="h-4 w-20 mb-1" />
-                <Skeleton className="h-3 w-16" />
-              </div>
-            </div>
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel><Skeleton className="h-4 w-24" /></SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {[...Array(4)].map((_, i) => (
-                  <SidebarMenuItem key={i}>
-                    <div className="flex items-center gap-2 p-2">
-                      <Skeleton className="h-4 w-4" />
-                      <Skeleton className="h-4 w-28" />
-                    </div>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter>
-          <div className="p-4">
-            <Skeleton className="h-24 w-full rounded-lg" />
-          </div>
-        </SidebarFooter>
-      </Sidebar>
-    );
-  }
+  // Calculate unread notifications count
+  const unreadNotifications = React.useMemo(() => {
+    if (!notifications || notificationsLoading) return 0;
+    return notifications.filter(n => !n.is_read).length;
+  }, [notifications, notificationsLoading]);
 
-  const pendingAssignmentsCount = assignmentsData?.filter(a => a.status === 'Pending').length || 0;
-  const activeCoursesCount = enrollments?.length || 0;
-
-  let currentMenuItems: MenuItem[] = [];
-  let sidebarHeaderText = "StudyFlow";
-  let sidebarSubText = "Learn & Grow";
-  let logoInitial = "S";
-  let footerContent: React.ReactNode = null;
-
-  const studentMenuItems: MenuItem[] = [
-    { title: "Dashboard", url: "/", icon: Layers, badge: null },
-    { title: "My Courses", url: "/courses", icon: Calendar, badge: activeCoursesCount > 0 ? activeCoursesCount : null },
-    { title: "Assignments", url: "/assignments", icon: ListTodo, badge: pendingAssignmentsCount > 0 ? pendingAssignmentsCount : null },
-    { title: "Schedule", url: "/schedule", icon: Clock, badge: null },
-  ];
-
-  const studentFooter = (
-    <div className="p-4">
-      <div className="rounded-lg gradient-card border p-4">
-        <h3 className="font-medium text-sm mb-2">🎯 Daily Goal</h3>
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs">
-            <span>Study Time</span>
-            {/* This part will be updated in DailyGoalTracker.tsx */}
-            <span>Loading...</span> 
-          </div>
-          <div className="w-full bg-muted rounded-full h-2">
-            <div className="gradient-primary h-2 rounded-full" style={{width: "0%"}}></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const instructorMenuItems: MenuItem[] = [
-    { title: "Dashboard", url: "/instructor", icon: LayoutDashboard, badge: null },
-    { title: "Upload Content", url: "/instructor/upload", icon: Upload, badge: null },
-    { title: "Create Tests", url: "/instructor/tests", icon: FileText, badge: null },
-    { title: "My Courses", url: "/courses", icon: Calendar, badge: null }, // Instructors might see courses they manage
-    { title: "Analytics", url: "#", icon: BarChart3, badge: null },
-    { title: "Settings", url: "#", icon: Settings, badge: null },
-  ];
-
-  const instructorFooter = (
-     <div className="p-4 text-center text-sm text-muted-foreground">
-        Instructor Portal
-      </div>
-  );
-
-  const adminMenuItems: MenuItem[] = [
-    { title: "Dashboard", url: "/admin", icon: ShieldAlert, badge: null },
-    { title: "User Management", url: "#", icon: Users, badge: null },
-    { title: "Course Management", url: "#", icon: BookOpen, badge: null },
-    { title: "System Analytics", url: "#", icon: BarChart3, badge: null },
-    { title: "Reports", url: "#", icon: FilePieChart, badge: null },
-    { title: "Settings", url: "#", icon: Settings, badge: null },
-  ];
-
-   const adminFooter = (
-    <div className="p-4 text-center text-sm text-muted-foreground">
-      Admin Control Panel
-    </div>
-  );
-
-  if (profile?.role === 'instructor') {
-    currentMenuItems = instructorMenuItems;
-    sidebarHeaderText = "Instructor Panel";
-    sidebarSubText = "Empower Learning";
-    logoInitial = "I";
-    footerContent = instructorFooter;
-  } else if (profile?.role === 'super_admin' || profile?.role === 'client_admin') {
-    currentMenuItems = adminMenuItems;
-    sidebarHeaderText = "Admin Panel";
-    sidebarSubText = "Manage Platform";
-    logoInitial = "A";
-    footerContent = adminFooter;
-  } else { // Default to student
-    currentMenuItems = studentMenuItems;
-    sidebarHeaderText = "StudyFlow";
-    sidebarSubText = "Learn & Grow";
-    logoInitial = "S";
-    footerContent = studentFooter; // We'll update this footer's content via DailyGoalTracker later
-  }
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
-    <Sidebar className="border-r">
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <div className="px-4 py-2">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
-              <span className="text-white font-bold text-sm">{logoInitial}</span>
-            </div>
-            <div>
-              <h1 className="font-semibold text-lg">{sidebarHeaderText}</h1>
-              <p className="text-xs text-muted-foreground">{sidebarSubText}</p>
-            </div>
-          </div>
-        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <a href="/">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  <BookOpen className="size-4" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Learning Platform</span>
+                  <span className="truncate text-xs">Student Portal</span>
+                </div>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
-      
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {currentMenuItems.map((item) => (
+              {data.navMain.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="hover:bg-accent transition-colors">
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        "flex items-center justify-between w-full" +
-                        (isActive && item.url !== "#" ? " bg-accent font-semibold" : "")
-                      }
-                    >
-                      <div className="flex items-center gap-2">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </div>
-                      {item.badge && item.badge > 0 && (
-                        <Badge variant="secondary" className="ml-auto">
-                          {item.badge}
+                  <SidebarMenuButton tooltip={item.title} asChild>
+                    <a href={item.url} className="flex items-center gap-2">
+                      <item.icon className="size-4" />
+                      <span>{item.title}</span>
+                      {item.title === "Assignments" && pendingAssignments > 0 && (
+                        <Badge variant="destructive" className="ml-auto h-5 px-1.5 text-xs">
+                          {pendingAssignments}
                         </Badge>
                       )}
-                    </NavLink>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>Account</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/notifications" className="flex items-center gap-2">
+                    <Bell className="size-4" />
+                    <span>Notifications</span>
+                    {unreadNotifications > 0 && (
+                      <Badge variant="destructive" className="ml-auto h-5 px-1.5 text-xs">
+                        {unreadNotifications}
+                      </Badge>
+                    )}
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/settings" className="flex items-center gap-2">
+                    <Settings className="size-4" />
+                    <span>Settings</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
-      
       <SidebarFooter>
-        {footerContent}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <div className="flex flex-col gap-2 p-2">
+              <div className="text-xs text-muted-foreground">
+                Signed in as: {profile?.full_name || 'Student'}
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSignOut}
+                className="w-full"
+              >
+                Sign out
+              </Button>
+            </div>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   );
 }
