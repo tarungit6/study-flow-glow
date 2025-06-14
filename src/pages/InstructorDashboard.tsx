@@ -1,10 +1,15 @@
 
 import React from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { InstructorNav } from '@/components/instructor/InstructorNav';
 import { InstructorOverview } from '@/components/instructor/InstructorOverview';
 
 export default function InstructorDashboard() {
+  const location = useLocation();
+  // Only show overview when on exact /instructor path, not on subpages
+  const isIndex = location.pathname === '/instructor';
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -16,7 +21,9 @@ export default function InstructorDashboard() {
         </div>
         
         <InstructorNav />
-        <InstructorOverview />
+        {isIndex && <InstructorOverview />}
+        {/* Render nested routes */}
+        <Outlet />
       </div>
     </Layout>
   );
