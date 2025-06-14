@@ -675,12 +675,17 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           description: string | null
+          difficulty: string | null
+          grade_level: string | null
           id: string
+          instructions: string | null
           max_attempts: number | null
           passing_score: number | null
           status: Database["public"]["Enums"]["quiz_status"] | null
+          subject: string | null
           time_limit_minutes: number | null
           title: string
+          topic: string | null
           updated_at: string | null
         }
         Insert: {
@@ -688,12 +693,17 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          difficulty?: string | null
+          grade_level?: string | null
           id?: string
+          instructions?: string | null
           max_attempts?: number | null
           passing_score?: number | null
           status?: Database["public"]["Enums"]["quiz_status"] | null
+          subject?: string | null
           time_limit_minutes?: number | null
           title: string
+          topic?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -701,12 +711,17 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          difficulty?: string | null
+          grade_level?: string | null
           id?: string
+          instructions?: string | null
           max_attempts?: number | null
           passing_score?: number | null
           status?: Database["public"]["Enums"]["quiz_status"] | null
+          subject?: string | null
           time_limit_minutes?: number | null
           title?: string
+          topic?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -728,8 +743,10 @@ export type Database = {
       }
       quiz_questions: {
         Row: {
+          concept: string | null
           correct_answer: string
           created_at: string | null
+          explanation: string | null
           id: string
           options: Json | null
           order_index: number
@@ -739,8 +756,10 @@ export type Database = {
           quiz_id: string | null
         }
         Insert: {
+          concept?: string | null
           correct_answer: string
           created_at?: string | null
+          explanation?: string | null
           id?: string
           options?: Json | null
           order_index: number
@@ -750,8 +769,10 @@ export type Database = {
           quiz_id?: string | null
         }
         Update: {
+          concept?: string | null
           correct_answer?: string
           created_at?: string | null
+          explanation?: string | null
           id?: string
           options?: Json | null
           order_index?: number
