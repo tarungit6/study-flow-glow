@@ -1,4 +1,3 @@
-
 import {
   Calendar,
   Clock,
@@ -32,16 +31,25 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton"; // For loading state
+import { useAssignments } from "@/hooks/api/useAssignments"; 
+import { useEnrollments } from "@/hooks/api/useCourses";
 
 interface MenuItem {
   title: string;
   url: string;
   icon: LucideIcon;
-  badge: string | null;
+  badge?: string | number | null; // Allow number for dynamic badges
 }
 
 export function AppSidebar() {
-  const { profile, loading } = useAuth();
+  const { profile, loading: authLoading } = useAuth();
+  
+  // Fetch data for badges - assuming these hooks fetch for the current user
+  const { data: enrollments, isLoading: enrollmentsLoading } = useEnrollments();
+  // Assuming useAssignments returns assignments with a 'status' field
+  const { data: assignmentsData, isLoading: assignmentsLoading } = useAssignments();
+
+  const loading = authLoading || enrollmentsLoading || assignmentsLoading;
 
   if (loading) {
     return (
@@ -83,6 +91,9 @@ export function AppSidebar() {
     );
   }
 
+  const pendingAssignmentsCount = assignmentsData?.filter(a => a.status === 'Pending').length || 0;
+  const activeCoursesCount = enrollments?.length || 0;
+
   let currentMenuItems: MenuItem[] = [];
   let sidebarHeaderText = "StudyFlow";
   let sidebarSubText = "Learn & Grow";
@@ -91,8 +102,8 @@ export function AppSidebar() {
 
   const studentMenuItems: MenuItem[] = [
     { title: "Dashboard", url: "/", icon: Layers, badge: null },
-    { title: "My Courses", url: "/courses", icon: Calendar, badge: "4" }, // Example badge
-    { title: "Assignments", url: "/assignments", icon: ListTodo, badge: "2" }, // Example badge
+    { title: "My Courses", url: "/courses", icon: Calendar, badge: activeCoursesCount > 0 ? activeCoursesCount : null },
+    { title: "Assignments", url: "/assignments", icon: ListTodo, badge: pendingAssignmentsCount > 0 ? pendingAssignmentsCount : null },
     { title: "Schedule", url: "/schedule", icon: Clock, badge: null },
   ];
 
@@ -103,10 +114,11 @@ export function AppSidebar() {
         <div className="space-y-2">
           <div className="flex justify-between text-xs">
             <span>Study Time</span>
-            <span>2h 45m / 3h</span>
+            {/* This part will be updated in DailyGoalTracker.tsx */}
+            <span>Loading...</span> 
           </div>
           <div className="w-full bg-muted rounded-full h-2">
-            <div className="gradient-primary h-2 rounded-full" style={{width: "92%"}}></div>
+            <div className="gradient-primary h-2 rounded-full" style={{width: "0%"}}></div>
           </div>
         </div>
       </div>
@@ -117,9 +129,9 @@ export function AppSidebar() {
     { title: "Dashboard", url: "/instructor", icon: LayoutDashboard, badge: null },
     { title: "Upload Content", url: "/instructor/upload", icon: Upload, badge: null },
     { title: "Create Tests", url: "/instructor/tests", icon: FileText, badge: null },
-    { title: "My Courses", url: "/courses", icon: Calendar, badge: null },
-    { title: "Analytics", url: "#", icon: BarChart3, badge: null }, // Placeholder URL
-    { title: "Settings", url: "#", icon: Settings, badge: null },   // Placeholder URL
+    { title: "My Courses", url: "/courses", icon: Calendar, badge: null }, // Instructors might see courses they manage
+    { title: "Analytics", url: "#", icon: BarChart3, badge: null },
+    { title: "Settings", url: "#", icon: Settings, badge: null },
   ];
 
   const instructorFooter = (
@@ -130,11 +142,11 @@ export function AppSidebar() {
 
   const adminMenuItems: MenuItem[] = [
     { title: "Dashboard", url: "/admin", icon: ShieldAlert, badge: null },
-    { title: "User Management", url: "#", icon: Users, badge: null },      // Placeholder URL
-    { title: "Course Management", url: "#", icon: BookOpen, badge: null }, // Placeholder URL
-    { title: "System Analytics", url: "#", icon: BarChart3, badge: null },// Placeholder URL
-    { title: "Reports", url: "#", icon: FilePieChart, badge: null },      // Placeholder URL
-    { title: "Settings", url: "#", icon: Settings, badge: null },         // Placeholder URL
+    { title: "User Management", url: "#", icon: Users, badge: null },
+    { title: "Course Management", url: "#", icon: BookOpen, badge: null },
+    { title: "System Analytics", url: "#", icon: BarChart3, badge: null },
+    { title: "Reports", url: "#", icon: FilePieChart, badge: null },
+    { title: "Settings", url: "#", icon: Settings, badge: null },
   ];
 
    const adminFooter = (
@@ -160,7 +172,7 @@ export function AppSidebar() {
     sidebarHeaderText = "StudyFlow";
     sidebarSubText = "Learn & Grow";
     logoInitial = "S";
-    footerContent = studentFooter;
+    footerContent = studentFooter; // We'll update this footer's content via DailyGoalTracker later
   }
 
   return (
@@ -198,7 +210,7 @@ export function AppSidebar() {
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </div>
-                      {item.badge && (
+                      {item.badge && item.badge > 0 && (
                         <Badge variant="secondary" className="ml-auto">
                           {item.badge}
                         </Badge>
