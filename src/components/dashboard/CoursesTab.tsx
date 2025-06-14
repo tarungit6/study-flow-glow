@@ -6,18 +6,22 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, User, Clock, Star, ArrowRight } from 'lucide-react';
+import type { Enrollment } from '@/types/course';
 
 const difficultyColors = {
   'beginner': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   'intermediate': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
   'advanced': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-};
+} as const;
 
 export function CoursesTab() {
   const { data: enrollments, isLoading } = useEnrollments();
 
-  // Filter out enrollments with null course data
-  const validEnrollments = enrollments?.filter(e => e.course) || [];
+  // Filter out enrollments with null course data and cast to Enrollment type
+  const validEnrollments = React.useMemo(() => {
+    if (!enrollments) return [] as Enrollment[];
+    return enrollments.filter(e => e.course) as unknown as Enrollment[];
+  }, [enrollments]);
 
   // Get counts for overview
   const totalEnrolled = validEnrollments.length;
