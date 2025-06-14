@@ -13,7 +13,7 @@ export const useAssignments = (userId?: string) => {
   const queryClient = useQueryClient();
 
   // Get all assignments
-  const { data: assignments, isLoading: isLoadingAssignments } = useQuery({
+  const { data: assignmentsData, isLoading: isLoadingAssignments, error: assignmentsError } = useQuery({
     queryKey: ['assignments'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -48,7 +48,7 @@ export const useAssignments = (userId?: string) => {
   });
 
   // Get user's assignments (with submissions)
-  const { data: userAssignments, isLoading: isLoadingUserAssignments } = useQuery({
+  const { data: userAssignmentsData, isLoading: isLoadingUserAssignments, error: userAssignmentsError } = useQuery({
     queryKey: ['user-assignments', userId],
     queryFn: async () => {
       if (!userId) return [];
@@ -235,11 +235,12 @@ export const useAssignments = (userId?: string) => {
   });
 
   return {
-    assignments,
-    userAssignments,
+    assignments: assignmentsData,
+    userAssignments: userAssignmentsData,
     isLoading: isLoadingAssignments || isLoadingUserAssignments,
+    error: assignmentsError || userAssignmentsError, // Consolidated error
     createAssignment,
     submitAssignment,
     gradeAssignment,
   };
-}; 
+};
