@@ -1,134 +1,178 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useEnrollments } from '@/hooks/api/useCourses';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { BookOpen, User, Clock, Star, ArrowRight } from 'lucide-react';
+import type { Enrollment } from '@/types/course';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { BookOpen, Clock, Star } from "lucide-react";
+const difficultyColors = {
+  'beginner': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  'intermediate': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+  'advanced': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+} as const;
 
 export function CoursesTab() {
-  const courses = [
-    {
-      id: 1,
-      title: "Advanced Mathematics",
-      progress: 75,
-      nextTopic: "Calculus Integration",
-      recentActivity: "Quiz completed 2h ago",
-      difficulty: "Hard",
-      instructor: "Dr. Smith",
-      color: "bg-blue-500",
-    },
-    {
-      id: 2,
-      title: "Computer Science",
-      progress: 60,
-      nextTopic: "Data Structures",
-      recentActivity: "Lesson watched yesterday",
-      difficulty: "Medium",
-      instructor: "Prof. Johnson",
-      color: "bg-purple-500",
-    },
-    {
-      id: 3,
-      title: "Physics Fundamentals",
-      progress: 85,
-      nextTopic: "Quantum Mechanics",
-      recentActivity: "Assignment submitted",
-      difficulty: "Hard",
-      instructor: "Dr. Williams",
-      color: "bg-green-500",
-    },
-    {
-      id: 4,
-      title: "English Literature",
-      progress: 45,
-      nextTopic: "Shakespeare Analysis",
-      recentActivity: "New lesson available",
-      difficulty: "Easy",
-      instructor: "Ms. Davis",
-      color: "bg-pink-500",
-    },
-  ];
+  const { data: enrollments, isLoading } = useEnrollments();
 
-  const getDifficultyIcon = (difficulty: string) => {
-    switch (difficulty) {
-      case "Easy": return "🟢";
-      case "Medium": return "🟡";
-      case "Hard": return "🔴";
-      default: return "⚪";
-    }
-  };
+  // Filter out enrollments with null course data and cast to Enrollment type
+  const validEnrollments = React.useMemo(() => {
+    if (!enrollments) return [] as Enrollment[];
+    return enrollments.filter(e => e.course) as unknown as Enrollment[];
+  }, [enrollments]);
+
+  // Get counts for overview
+  const totalEnrolled = validEnrollments.length;
+  const beginnerCourses = validEnrollments.filter(e => e.course?.difficulty_level?.toLowerCase() === 'beginner').length;
+  const advancedCourses = validEnrollments.filter(e => e.course?.difficulty_level?.toLowerCase() === 'advanced').length;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        {/* Overview Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Course Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="flex flex-col">
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+              <CardContent className="flex-1">
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-2/3" />
+              </CardContent>
+              <CardFooter>
+                <Skeleton className="h-10 w-full" />
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Course Overview */}
+    <div className="space-y-8">
+      {/* Overview Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="gradient-card border-0">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold">4</div>
-            <div className="text-sm text-muted-foreground">Active Courses</div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active Courses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalEnrolled}</div>
           </CardContent>
         </Card>
-        <Card className="gradient-card border-0">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold">66%</div>
-            <div className="text-sm text-muted-foreground">Avg Progress</div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Beginner Friendly</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{beginnerCourses}</div>
           </CardContent>
         </Card>
-        <Card className="gradient-card border-0">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold">12h</div>
-            <div className="text-sm text-muted-foreground">This Week</div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Advanced Level</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{advancedCourses}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Course Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {courses.map((course) => (
-          <Card key={course.id} className="gradient-card border-0 hover:shadow-lg transition-all hover:scale-[1.02]">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full ${course.color}`}></div>
-                  <div>
-                    <h3 className="font-semibold">{course.title}</h3>
-                    <p className="text-sm text-muted-foreground">{course.instructor}</p>
+      {validEnrollments.length === 0 ? (
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium mb-2">No Enrolled Courses</h3>
+          <p className="text-muted-foreground mb-4">You haven't enrolled in any courses yet.</p>
+          <Button asChild>
+            <Link to="/browse-courses">Browse Courses</Link>
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {validEnrollments.map((enrollment) => {
+            const course = enrollment.course;
+            if (!course) return null;
+
+            return (
+              <Card key={enrollment.id} className="flex flex-col hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
+                    {course.difficulty_level && (
+                      <Badge 
+                        className={`shrink-0 ${difficultyColors[course.difficulty_level.toLowerCase() as keyof typeof difficultyColors] || 'bg-gray-100 text-gray-800'}`}
+                      >
+                        {course.difficulty_level}
+                      </Badge>
+                    )}
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">{getDifficultyIcon(course.difficulty)}</span>
-                  <Badge variant="outline">{course.progress}%</Badge>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Course Progress</span>
-                    <span>{course.progress}%</span>
-                  </div>
-                  <Progress value={course.progress} className="h-2" />
-                </div>
+                  {course.instructor && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <User className="h-3 w-3" />
+                      <span>{course.instructor.full_name}</span>
+                    </div>
+                  )}
+                </CardHeader>
                 
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <BookOpen className="w-4 h-4" />
-                    <span className="font-medium">Next: {course.nextTopic}</span>
+                <CardContent className="flex-1">
+                  <CardDescription className="line-clamp-3 mb-4">
+                    {course.description || 'No description available.'}
+                  </CardDescription>
+                  
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    {course.category && (
+                      <div className="flex items-center gap-1">
+                        <BookOpen className="h-3 w-3" />
+                        <span>{course.category}</span>
+                      </div>
+                    )}
+                    {course.duration_hours && course.duration_hours > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>{course.duration_hours}h</span>
+                      </div>
+                    )}
+                    {course.enrollments && course.enrollments.length > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3 w-3" />
+                        <span>{course.enrollments.length} enrolled</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="w-4 h-4" />
-                    <span>{course.recentActivity}</span>
-                  </div>
-                </div>
-                
-                <Button className="w-full gradient-primary border-0 text-white hover:opacity-90">
-                  Continue Learning
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                </CardContent>
+
+                <CardFooter>
+                  <Button asChild className="w-full">
+                    <Link to={`/courses/${course.id}`} className="flex items-center justify-center gap-2">
+                      <span>Continue Learning</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

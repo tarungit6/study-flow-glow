@@ -9,14 +9,17 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Terminal, Search, BookOpen, User, Clock, Star } from 'lucide-react';
+import { Terminal, Search, BookOpen, User, Clock, Star, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import type { Course, Enrollment } from '@/types/course';
 
 const difficultyColors = {
   'beginner': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   'intermediate': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
   'advanced': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-};
+} as const;
+
+type DifficultyLevel = keyof typeof difficultyColors;
 
 export default function BrowseCourses() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,21 +40,15 @@ export default function BrowseCourses() {
 
   // Get enrolled course IDs
   const enrolledCourseIds = useMemo(() => {
-    if (!enrollments) return new Set();
+    if (!enrollments) return new Set<string>();
     return new Set(enrollments.map(e => e.course_id));
   }, [enrollments]);
 
   // Filter available courses (not enrolled, published)
   const availableCourses = useMemo(() => {
-    if (!allCourses) return [];
-    
-    const filtered = allCourses.filter(course => 
-      course.is_published && !enrolledCourseIds.has(course.id)
-    );
-    
-    console.log('Available courses after filtering:', filtered);
-    return filtered;
-  }, [allCourses, enrolledCourseIds]);
+    if (!allCourses) return [] as Course[];
+    return allCourses.filter(course => course.is_published) as Course[];
+  }, [allCourses]);
 
   // Get unique categories and difficulties
   const categories = useMemo(() => {
@@ -81,10 +78,31 @@ export default function BrowseCourses() {
 
   const handleEnroll = async (courseId: string, courseTitle: string) => {
     try {
+      // Check if already enrolled
+      if (enrolledCourseIds.has(courseId)) {
+        toast.error('You are already enrolled in this course');
+        return;
+      }
+
+      // Disable all buttons while enrolling
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(button => button.disabled = true);
+
       await enrollInCourse.mutateAsync(courseId);
       toast.success(`Successfully enrolled in ${courseTitle}!`);
+      
+      // Refresh the page to update the UI
+      window.location.reload();
     } catch (error) {
       toast.error('Failed to enroll in course. Please try again.');
+    } finally {
+      // Re-enable all buttons
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(button => {
+        if (!button.classList.contains('enrolled')) {
+          button.disabled = false;
+        }
+      });
     }
   };
 
@@ -194,16 +212,7 @@ export default function BrowseCourses() {
         </Select>
       </div>
 
-      {/* Results Summary */}
-      <div className="text-sm text-muted-foreground mb-4">
-        {filteredCourses.length === 0 ? (
-          'No courses found matching your criteria'
-        ) : (
-          `Showing ${filteredCourses.length} course${filteredCourses.length !== 1 ? 's' : ''}`
-        )}
-      </div>
-
-      {/* Courses Grid */}
+      {/* Course Grid */}
       {filteredCourses.length === 0 ? (
         <Alert>
           <BookOpen className="h-4 w-4" />
@@ -217,65 +226,77 @@ export default function BrowseCourses() {
         </Alert>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCourses.map((course) => (
-            <Card key={course.id} className="flex flex-col hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
-                  {course.difficulty_level && (
-                    <Badge 
-                      className={`shrink-0 ${difficultyColors[course.difficulty_level as keyof typeof difficultyColors] || 'bg-gray-100 text-gray-800'}`}
-                    >
-                      {course.difficulty_level}
-                    </Badge>
-                  )}
-                </div>
-                {course.instructor && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <User className="h-3 w-3" />
-                    <span>{course.instructor.full_name}</span>
+          {filteredCourses.map((course) => {
+            const isEnrolled = enrolledCourseIds.has(course.id);
+            return (
+              <Card key={course.id} className="flex flex-col hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
+                    {course.difficulty_level && (
+                      <Badge 
+                        className={`shrink-0 ${difficultyColors[course.difficulty_level.toLowerCase() as DifficultyLevel] || 'bg-gray-100 text-gray-800'}`}
+                      >
+                        {course.difficulty_level}
+                      </Badge>
+                    )}
                   </div>
-                )}
-              </CardHeader>
-              
-              <CardContent className="flex-1">
-                <CardDescription className="line-clamp-3 mb-4">
-                  {course.description || 'No description available.'}
-                </CardDescription>
+                  {course.instructor && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <User className="h-3 w-3" />
+                      <span>{course.instructor.full_name}</span>
+                    </div>
+                  )}
+                </CardHeader>
                 
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  {course.category && (
-                    <div className="flex items-center gap-1">
-                      <BookOpen className="h-3 w-3" />
-                      <span>{course.category}</span>
-                    </div>
-                  )}
-                  {course.duration_hours && course.duration_hours > 0 && (
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <span>{course.duration_hours}h</span>
-                    </div>
-                  )}
-                  {course.enrollments && course.enrollments.length > 0 && (
-                    <div className="flex items-center gap-1">
-                      <Star className="h-3 w-3" />
-                      <span>{course.enrollments.length} enrolled</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
+                <CardContent className="flex-1">
+                  <CardDescription className="line-clamp-3 mb-4">
+                    {course.description || 'No description available.'}
+                  </CardDescription>
+                  
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    {course.category && (
+                      <div className="flex items-center gap-1">
+                        <BookOpen className="h-3 w-3" />
+                        <span>{course.category}</span>
+                      </div>
+                    )}
+                    {course.duration_hours && course.duration_hours > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>{course.duration_hours}h</span>
+                      </div>
+                    )}
+                    {course.enrollments && course.enrollments.length > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3 w-3" />
+                        <span>{course.enrollments.length} enrolled</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
 
-              <CardFooter>
-                <Button 
-                  className="w-full" 
-                  onClick={() => handleEnroll(course.id, course.title)}
-                  disabled={enrollInCourse.isPending}
-                >
-                  {enrollInCourse.isPending ? 'Enrolling...' : 'Enroll Now'}
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                <CardFooter>
+                  <Button 
+                    className={`w-full ${isEnrolled ? 'bg-green-600 hover:bg-green-700 enrolled' : ''}`}
+                    onClick={() => !isEnrolled && handleEnroll(course.id, course.title)}
+                    disabled={enrollInCourse.isPending || isEnrolled}
+                  >
+                    {isEnrolled ? (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span>Enrolled</span>
+                      </div>
+                    ) : enrollInCourse.isPending ? (
+                      'Enrolling...'
+                    ) : (
+                      'Enroll Now'
+                    )}
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
