@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { useAssignments } from "@/hooks/api/useAssignments";
 import { useNotifications } from "@/hooks/api/useNotifications";
 
+// This component is now deprecated in favor of SupabaseSidebar
+// Keeping for backward compatibility but not used in current layout
+
 const navItems = [
   {
     title: "Dashboard",
@@ -47,7 +50,7 @@ const navItems = [
     title: "Achievements",
     url: "/achievements",
     icon: Trophy,
-  },
+  }
 ] as const;
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
