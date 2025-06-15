@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCourses } from '@/hooks/api/useCourses';
@@ -15,10 +16,8 @@ export default function InstructorDashboard() {
     return courses.filter(course => !course.is_published);
   }, [courses]);
 
-  const totalEnrollments = React.useMemo(() => {
-    if (!publishedCourses) return 0;
-    return publishedCourses.reduce((acc, course) => acc + (course.enrollments?.length || 0), 0);
-  }, [publishedCourses]);
+  // Since educational_content doesn't have enrollments, we'll use a placeholder
+  const totalEnrollments = 0; // This would need to be calculated differently
 
   if (isLoading) {
     return (
