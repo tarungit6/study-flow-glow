@@ -40,7 +40,7 @@ export const useCourse = (courseId: string) => {
           instructor:profiles(full_name)
         `)
         .eq('id', courseId)
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
       return data;
