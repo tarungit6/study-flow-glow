@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, User, Clock, Star, ArrowRight, ExternalLink } from 'lucide-react';
 import type { Enrollment } from '@/types/course';
+import type { Course } from '@/types/course';
 
 const difficultyColors = {
   'easy': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
@@ -21,13 +22,14 @@ export function CoursesTab() {
   // Filter out enrollments with null course data and cast to Enrollment type
   const validEnrollments = React.useMemo(() => {
     if (!enrollments) return [] as Enrollment[];
-    return enrollments.filter(e => e.course) as unknown as Enrollment[];
+    return enrollments.filter(e => e.content) as unknown as Enrollment[];
+
   }, [enrollments]);
 
   // Get counts for overview
   const totalEnrolled = validEnrollments.length;
-  const easyCourses = validEnrollments.filter(e => e.course?.difficulty?.toLowerCase() === 'easy').length;
-  const hardCourses = validEnrollments.filter(e => e.course?.difficulty?.toLowerCase() === 'hard').length;
+  const easyCourses = validEnrollments.filter(e => e.content?.difficulty?.toLowerCase() === 'easy').length;
+  const hardCourses = validEnrollments.filter(e => e.content?.difficulty?.toLowerCase() === 'hard').length;
 
   if (isLoading) {
     return (
@@ -110,46 +112,46 @@ export function CoursesTab() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {validEnrollments.map((enrollment) => {
-            const course = enrollment.course;
-            if (!course) return null;
+            const content = enrollment.content as Course;
+            if (!content) return null;
 
             return (
               <Card key={enrollment.id} className="flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-200">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
-                    {course.difficulty && (
+                    <CardTitle className="text-lg line-clamp-2">{content.title}</CardTitle>
+                    {content.difficulty && (
                       <Badge 
-                        className={`shrink-0 ${difficultyColors[course.difficulty.toLowerCase() as keyof typeof difficultyColors] || 'bg-gray-100 text-gray-800'}`}
+                        className={`shrink-0 ${difficultyColors[content.difficulty.toLowerCase() as keyof typeof difficultyColors] || 'bg-gray-100 text-gray-800'}`}
                       >
-                        {course.difficulty}
+                        {content.difficulty}
                       </Badge>
                     )}
                   </div>
-                  {course.instructor && (
+                  {content.instructor && (
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <User className="h-3 w-3" />
-                      <span>{course.instructor.full_name}</span>
+                      <span>{content.instructor.full_name}</span>
                     </div>
                   )}
                 </CardHeader>
                 
                 <CardContent className="flex-1">
                   <CardDescription className="line-clamp-3 mb-4">
-                    {course.description || 'No description available.'}
+                    {content.description || 'No description available.'}
                   </CardDescription>
                   
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    {course.subject && (
+                    {content.subject && (
                       <div className="flex items-center gap-1">
                         <BookOpen className="h-3 w-3" />
-                        <span>{course.subject}</span>
+                        <span>{content.subject}</span>
                       </div>
                     )}
-                    {course.content_type && (
+                    {content.content_type && (
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        <span>{course.content_type}</span>
+                        <span>{content.content_type}</span>
                       </div>
                     )}
                   </div>
@@ -158,7 +160,7 @@ export function CoursesTab() {
                 <CardFooter>
                   <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
                     <a 
-                      href={course.url} 
+                      href={content.url} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-2"
