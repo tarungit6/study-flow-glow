@@ -50,27 +50,34 @@ export const useEnrollments = () => {
   return useQuery({
     queryKey: ['enrollments'],
     queryFn: async () => {
-      console.log('Fetching enrollments...');
-      
       const { data, error } = await supabase
         .from('enrollments')
-        .select(`
-          *,
-          course:educational_content(
-            *,
-            instructor:profiles(full_name)
-          )
-        `)
+        .select(`*, course_id`) // Only fetch enrollments now
         .order('enrolled_at', { ascending: false });
 
-      console.log('Enrollments data:', data);
-      console.log('Enrollments error:', error);
-
       if (error) throw error;
-      return data;
+
+      // Now manually fetch all related courses
+      const courseIds = data.map(e => e.course_id);
+
+      const { data: courses, error: courseError } = await supabase
+        .from('educational_content')
+        .select('*, instructor:profiles(full_name)')
+        .in('id', courseIds);
+
+      if (courseError) throw courseError;
+
+      // Join course data manually
+      const enrollmentsWithCourse = data.map(enrollment => ({
+        ...enrollment,
+        content: courses.find(c => c.id === enrollment.course_id),
+      }));
+
+      return enrollmentsWithCourse;
     },
   });
 };
+
 
 export const useEnrollInCourse = () => {
   const queryClient = useQueryClient();
