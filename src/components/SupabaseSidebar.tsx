@@ -20,7 +20,15 @@ import { useNotifications } from "@/hooks/api/useNotifications";
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 
-const navItems = [
+interface NavItem {
+  title: string;
+  url: string;
+  icon: any;
+  exact?: boolean;
+  showBadge?: boolean;
+}
+
+const navItems: NavItem[] = [
   {
     title: "Dashboard",
     url: "/",
@@ -65,7 +73,7 @@ const navItems = [
   },
 ] as const;
 
-const bottomNavItems = [
+const bottomNavItems: NavItem[] = [
   {
     title: "Notifications",
     url: "/notifications",
@@ -95,7 +103,7 @@ export function SupabaseSidebar() {
     return notifications.filter(n => !n.is_read).length;
   }, [notifications, notificationsLoading]);
 
-  const getBadgeCount = (item: any) => {
+  const getBadgeCount = (item: NavItem) => {
     if (item.title === "Assignments") return pendingAssignments;
     if (item.title === "Notifications") return unreadNotifications;
     return 0;

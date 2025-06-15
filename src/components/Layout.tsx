@@ -24,7 +24,6 @@ export function Layout({ children }: LayoutProps) {
   const { signOut, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarExpanded, setSidebarExpanded] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -45,12 +44,12 @@ export function Layout({ children }: LayoutProps) {
   }, [profile, navigate, location.pathname]);
 
   return (
-    <div className="min-h-screen w-full max-w-full flex bg-slate-50 dark:bg-slate-900 overflow-x-hidden">
+    <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 overflow-x-hidden">
       <SupabaseSidebar />
-      <main className={`flex-1 flex flex-col min-w-0 max-w-full transition-all duration-300 ml-16`}>
+      <main className="flex-1 flex flex-col min-w-0 ml-16 transition-all duration-300">
         {/* Enhanced Header */}
-        <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-700 shadow-sm">
-          <div className="flex h-16 items-center justify-between px-6">
+        <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/50 dark:border-slate-700/50 shadow-sm">
+          <div className="flex h-16 items-center justify-between px-8 max-w-none">
             <div className="flex items-center gap-4">
               <div className="block">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
@@ -102,8 +101,9 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </div>
         </header>
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col w-full max-w-full p-6 mx-auto">
+        
+        {/* Main Content with optimized spacing */}
+        <div className="flex-1 w-full px-4 sm:px-6 lg:px-8 xl:px-12 py-6 max-w-none">
           {children}
         </div>
       </main>
