@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useEnrollments } from '@/hooks/api/useCourses';
@@ -85,7 +83,8 @@ export default function Courses() {
            'title' in e.course &&
            !('message' in e.course); // Exclude error objects
   }).map(enrollment => {
-    const course = enrollment.course as any; // Type assertion since we've verified it's valid
+    // At this point we know course is valid, but TypeScript still needs assertion
+    const course = enrollment.course!; // Non-null assertion since we filtered above
     return {
       id: course.id,
       title: course.title,
@@ -148,4 +147,3 @@ export default function Courses() {
     </div>
   );
 }
-
