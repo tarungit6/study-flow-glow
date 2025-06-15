@@ -7,6 +7,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Terminal, BookOpen, User, ExternalLink } from 'lucide-react';
+import type { Enrollment } from '@/types/course';
+
 
 const difficultyBadgeColors = (difficulty: string | null | undefined) => {
   switch (difficulty?.toLowerCase()) {
@@ -35,19 +37,7 @@ const categoryColors = (category: string | null | undefined) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-interface ValidCourse {
-  id: string;
-  title: string;
-  instructor?: { full_name: string };
-  subject?: string;
-  difficulty?: string;
-  url?: string;
-}
 
-interface ValidEnrollment {
-  course: ValidCourse;
-  progress_percentage?: number;
-}
 
 export default function Courses() {
   const { data: enrollments, isLoading, error } = useEnrollments();
@@ -88,31 +78,32 @@ export default function Courses() {
     );
   }
   
-  // Helper function to check if enrollment has a valid course
-  const hasValidCourse = (enrollment: any): enrollment is ValidEnrollment => {
-    return enrollment.course && 
-           enrollment.course !== null &&
-           typeof enrollment.course === 'object' && 
-           'id' in enrollment.course && 
-           'title' in enrollment.course &&
-           !('message' in enrollment.course);
+  const hasValidContent = (enrollment: any): enrollment is Enrollment => {
+    return enrollment.content &&
+           typeof enrollment.content === 'object' &&
+           'id' in enrollment.content &&
+           'title' in enrollment.content &&
+           !('message' in enrollment.content);
   };
+  
 
   // Filter enrollments with valid courses and map to course data
-  const validEnrollments = enrollments?.filter(hasValidCourse) || [];
-  
+  const validEnrollments = (enrollments || []).filter(hasValidContent);
+
+
   const courses = validEnrollments.map(enrollment => {
-    const course = enrollment.course;
+    const content = enrollment.content;
     return {
-      id: course.id,
-      title: course.title,
-      instructor: course.instructor?.full_name || 'N/A',
+      id: content.id,
+      title: content.title,
+      instructor: content.instructor?.full_name ?? 'N/A',
       progress: typeof enrollment.progress_percentage === 'number' ? enrollment.progress_percentage : 0,
-      color: categoryColors(course.subject || 'General'),
-      badge: course.difficulty || 'Medium',
-      url: course.url,
+      color: categoryColors(content.subject ?? 'General'),
+      badge: content.difficulty || 'Medium',
+      url: content.url,
     };
   });
+  
 
   return (
     <div className="p-6 space-y-8">

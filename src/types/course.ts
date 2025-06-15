@@ -26,13 +26,20 @@ export interface Course {
   enrollments?: Array<{ id: string }>;
 }
 
-export interface Enrollment {
+export type Enrollment = {
   id: string;
-  course_id: string;
   user_id: string;
-  course: Course;
+  course_id: string;
   enrolled_at: string;
-  completed_at: string | null;
   progress_percentage: number;
   status: 'active' | 'completed' | 'dropped' | 'pending';
-}
+  content: {
+    id: string;
+    title: string;
+    instructor?: { full_name: string };
+    subject?: string;
+    difficulty?: string;
+    url?: string;
+  };
+};
+
