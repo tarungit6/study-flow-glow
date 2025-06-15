@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useCourses, useEnrollInCourse } from '@/hooks/api/useCourses';
-import { useEnrollments } from '@/hooks/api/useCourses';
+import { useCourses, useEnrollInCourse, useEnrollments } from '@/hooks/api/useCourses';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Terminal, Search, BookOpen, User, Clock, Star, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Course, Enrollment } from '@/types/course';
+import type { Course } from '@/types/course';
 
 const difficultyColors = {
-  'beginner': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  'intermediate': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-  'advanced': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  'easy': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  'medium': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+  'hard': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
 } as const;
 
 type DifficultyLevel = keyof typeof difficultyColors;
@@ -25,39 +25,40 @@ export default function BrowseCourses() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [difficultyFilter, setDifficultyFilter] = useState('all');
+  const [enrolledCourses, setEnrolledCourses] = useState<Set<string>>(new Set());
 
   const { data: allCourses, isLoading, error } = useCourses();
   const { data: enrollments, isLoading: enrollmentsLoading } = useEnrollments();
   const enrollInCourse = useEnrollInCourse();
 
-  // Add debugging
-  useEffect(() => {
-    console.log('BrowseCourses - All courses data:', allCourses);
-    console.log('BrowseCourses - Enrollments data:', enrollments);
-    console.log('BrowseCourses - Loading states:', { isLoading, enrollmentsLoading });
-    console.log('BrowseCourses - Error:', error);
-  }, [allCourses, enrollments, isLoading, enrollmentsLoading, error]);
-
-  // Get enrolled course IDs
-  const enrolledCourseIds = useMemo(() => {
+  // Get enrolled course IDs from server data
+  const serverEnrolledCourseIds = useMemo(() => {
     if (!enrollments) return new Set<string>();
     return new Set(enrollments.map(e => e.course_id));
   }, [enrollments]);
 
+  // Combine server enrollments with local state
+  const allEnrolledCourseIds = useMemo(() => {
+    const combined = new Set([...serverEnrolledCourseIds, ...enrolledCourses]);
+    return combined;
+  }, [serverEnrolledCourseIds, enrolledCourses]);
+
   // Filter available courses (not enrolled, published)
   const availableCourses = useMemo(() => {
     if (!allCourses) return [] as Course[];
-    return allCourses.filter(course => course.is_published) as Course[];
-  }, [allCourses]);
+    return allCourses.filter(course => 
+      course.is_published && !allEnrolledCourseIds.has(course.id)
+    ) as Course[];
+  }, [allCourses, allEnrolledCourseIds]);
 
   // Get unique categories and difficulties
   const categories = useMemo(() => {
-    const cats = new Set(availableCourses.map(c => c.category).filter(Boolean));
+    const cats = new Set(availableCourses.map(c => c.subject).filter(Boolean));
     return Array.from(cats);
   }, [availableCourses]);
 
   const difficulties = useMemo(() => {
-    const diffs = new Set(availableCourses.map(c => c.difficulty_level).filter(Boolean));
+    const diffs = new Set(availableCourses.map(c => c.difficulty).filter(Boolean));
     return Array.from(diffs);
   }, [availableCourses]);
 
@@ -69,8 +70,8 @@ export default function BrowseCourses() {
         course.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         course.instructor?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesCategory = categoryFilter === 'all' || course.category === categoryFilter;
-      const matchesDifficulty = difficultyFilter === 'all' || course.difficulty_level === difficultyFilter;
+      const matchesCategory = categoryFilter === 'all' || course.subject === categoryFilter;
+      const matchesDifficulty = difficultyFilter === 'all' || course.difficulty === difficultyFilter;
 
       return matchesSearch && matchesCategory && matchesDifficulty;
     });
@@ -79,30 +80,19 @@ export default function BrowseCourses() {
   const handleEnroll = async (courseId: string, courseTitle: string) => {
     try {
       // Check if already enrolled
-      if (enrolledCourseIds.has(courseId)) {
+      if (allEnrolledCourseIds.has(courseId)) {
         toast.error('You are already enrolled in this course');
         return;
       }
 
-      // Disable all buttons while enrolling
-      const buttons = document.querySelectorAll('button');
-      buttons.forEach(button => button.disabled = true);
-
       await enrollInCourse.mutateAsync(courseId);
-      toast.success(`Successfully enrolled in ${courseTitle}!`);
       
-      // Refresh the page to update the UI
-      window.location.reload();
-    } catch (error) {
-      toast.error('Failed to enroll in course. Please try again.');
-    } finally {
-      // Re-enable all buttons
-      const buttons = document.querySelectorAll('button');
-      buttons.forEach(button => {
-        if (!button.classList.contains('enrolled')) {
-          button.disabled = false;
-        }
-      });
+      // Update local state immediately for UI responsiveness
+      setEnrolledCourses(prev => new Set([...prev, courseId]));
+      
+      toast.success(`Successfully enrolled in ${courseTitle}!`);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to enroll in course. Please try again.');
     }
   };
 
@@ -161,9 +151,8 @@ export default function BrowseCourses() {
         <div>
           <h1 className="text-2xl font-bold">Browse Courses</h1>
           <p className="text-muted-foreground">Discover new courses and expand your knowledge</p>
-          {/* Add debug info */}
           <p className="text-xs text-muted-foreground mt-1">
-            Debug: Total courses: {allCourses?.length || 0}, Available: {availableCourses.length}, Enrolled: {enrollments?.length || 0}
+            Available: {availableCourses.length} | Enrolled: {allEnrolledCourseIds.size}
           </p>
         </div>
         <Link to="/" className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition">
@@ -185,10 +174,10 @@ export default function BrowseCourses() {
         
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Category" />
+            <SelectValue placeholder="Subject" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="all">All Subjects</SelectItem>
             {categories.map(category => (
               <SelectItem key={category} value={category}>
                 {category}
@@ -227,17 +216,19 @@ export default function BrowseCourses() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((course) => {
-            const isEnrolled = enrolledCourseIds.has(course.id);
+            const isEnrolled = allEnrolledCourseIds.has(course.id);
+            const isEnrolling = enrollInCourse.isPending;
+            
             return (
-              <Card key={course.id} className="flex flex-col hover:shadow-lg transition-shadow">
+              <Card key={course.id} className="flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-200">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
-                    {course.difficulty_level && (
+                    {course.difficulty && (
                       <Badge 
-                        className={`shrink-0 ${difficultyColors[course.difficulty_level.toLowerCase() as DifficultyLevel] || 'bg-gray-100 text-gray-800'}`}
+                        className={`shrink-0 ${difficultyColors[course.difficulty.toLowerCase() as DifficultyLevel] || 'bg-gray-100 text-gray-800'}`}
                       >
-                        {course.difficulty_level}
+                        {course.difficulty}
                       </Badge>
                     )}
                   </div>
@@ -255,22 +246,16 @@ export default function BrowseCourses() {
                   </CardDescription>
                   
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    {course.category && (
+                    {course.subject && (
                       <div className="flex items-center gap-1">
                         <BookOpen className="h-3 w-3" />
-                        <span>{course.category}</span>
+                        <span>{course.subject}</span>
                       </div>
                     )}
-                    {course.duration_hours && course.duration_hours > 0 && (
+                    {course.content_type && (
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        <span>{course.duration_hours}h</span>
-                      </div>
-                    )}
-                    {course.enrollments && course.enrollments.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3" />
-                        <span>{course.enrollments.length} enrolled</span>
+                        <span>{course.content_type}</span>
                       </div>
                     )}
                   </div>
@@ -278,16 +263,16 @@ export default function BrowseCourses() {
 
                 <CardFooter>
                   <Button 
-                    className={`w-full ${isEnrolled ? 'bg-green-600 hover:bg-green-700 enrolled' : ''}`}
+                    className={`w-full ${isEnrolled ? 'bg-green-600 hover:bg-green-700' : 'bg-purple-600 hover:bg-purple-700'} transition-colors`}
                     onClick={() => !isEnrolled && handleEnroll(course.id, course.title)}
-                    disabled={enrollInCourse.isPending || isEnrolled}
+                    disabled={isEnrolling || isEnrolled}
                   >
                     {isEnrolled ? (
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4" />
                         <span>Enrolled</span>
                       </div>
-                    ) : enrollInCourse.isPending ? (
+                    ) : isEnrolling ? (
                       'Enrolling...'
                     ) : (
                       'Enroll Now'

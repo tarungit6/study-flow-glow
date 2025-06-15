@@ -1,9 +1,7 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
-
-type EducationalContent = Database['public']['Tables']['educational_content']['Row'];
 
 export const useCourses = () => {
   return useQuery({
@@ -52,19 +50,21 @@ export const useEnrollments = () => {
   return useQuery({
     queryKey: ['enrollments'],
     queryFn: async () => {
+      console.log('Fetching enrollments...');
+      
       const { data, error } = await supabase
         .from('enrollments')
         .select(`
           *,
           course:educational_content(
-            id,
-            title,
-            description,
-            url,
+            *,
             instructor:profiles(full_name)
           )
         `)
         .order('enrolled_at', { ascending: false });
+
+      console.log('Enrollments data:', data);
+      console.log('Enrollments error:', error);
 
       if (error) throw error;
       return data;
@@ -81,6 +81,8 @@ export const useEnrollInCourse = () => {
       if (!user) {
         throw new Error('You must be logged in to enroll in a course');
       }
+
+      console.log('Attempting to enroll in course:', courseId);
 
       // Check if already enrolled
       const { data: existingEnrollment } = await supabase
@@ -102,6 +104,7 @@ export const useEnrollInCourse = () => {
         .single();
 
       if (courseError) {
+        console.error('Course lookup error:', courseError);
         throw new Error('Course not found');
       }
 
@@ -126,6 +129,7 @@ export const useEnrollInCourse = () => {
         throw new Error(error.message || 'Failed to enroll in course');
       }
 
+      console.log('Enrollment successful:', data);
       return data;
     },
     onSuccess: () => {

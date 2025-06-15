@@ -382,52 +382,52 @@ export type Database = {
       }
       educational_content: {
         Row: {
-          id: string
-          title: string
-          description: string | null
-          url: string | null
-          content_type: string
-          subject: string | null
-          grade_level: string | null
-          topic: string | null
-          difficulty: string
           concepts: string[] | null
-          is_published: boolean
-          instructor_id: string
+          content_type: string | null
           created_at: string | null
+          description: string | null
+          difficulty: string | null
+          grade_level: string | null
+          id: string
+          instructor_id: string
+          is_published: boolean | null
+          subject: string | null
+          title: string
+          topic: string | null
           updated_at: string | null
+          url: string | null
         }
         Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          url?: string | null
-          content_type: string
-          subject?: string | null
-          grade_level?: string | null
-          topic?: string | null
-          difficulty?: string
           concepts?: string[] | null
-          is_published?: boolean
-          instructor_id: string
+          content_type?: string | null
           created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          grade_level?: string | null
+          id?: string
+          instructor_id: string
+          is_published?: boolean | null
+          subject?: string | null
+          title: string
+          topic?: string | null
           updated_at?: string | null
+          url?: string | null
         }
         Update: {
-          id?: string
-          title?: string
-          description?: string | null
-          url?: string | null
-          content_type?: string
-          subject?: string | null
-          grade_level?: string | null
-          topic?: string | null
-          difficulty?: string
           concepts?: string[] | null
-          is_published?: boolean
-          instructor_id?: string
+          content_type?: string | null
           created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          grade_level?: string | null
+          id?: string
+          instructor_id?: string
+          is_published?: boolean | null
+          subject?: string | null
+          title?: string
+          topic?: string | null
           updated_at?: string | null
+          url?: string | null
         }
         Relationships: [
           {
@@ -436,7 +436,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       enrollments: {
