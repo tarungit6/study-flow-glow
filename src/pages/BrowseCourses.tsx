@@ -11,12 +11,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Terminal, Search, BookOpen, User, Clock, Star, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import type { Course, Enrollment } from '@/types/course';
 
 const difficultyColors = {
   'beginner': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   'intermediate': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
   'advanced': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-};
+} as const;
+
+type DifficultyLevel = keyof typeof difficultyColors;
 
 export default function BrowseCourses() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,14 +40,14 @@ export default function BrowseCourses() {
 
   // Get enrolled course IDs
   const enrolledCourseIds = useMemo(() => {
-    if (!enrollments) return new Set();
+    if (!enrollments) return new Set<string>();
     return new Set(enrollments.map(e => e.course_id));
   }, [enrollments]);
 
   // Filter available courses (not enrolled, published)
   const availableCourses = useMemo(() => {
-    if (!allCourses) return [];
-    return allCourses.filter(course => course.is_published);
+    if (!allCourses) return [] as Course[];
+    return allCourses.filter(course => course.is_published) as Course[];
   }, [allCourses]);
 
   // Get unique categories and difficulties
@@ -232,7 +235,7 @@ export default function BrowseCourses() {
                     <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
                     {course.difficulty_level && (
                       <Badge 
-                        className={`shrink-0 ${difficultyColors[course.difficulty_level as keyof typeof difficultyColors] || 'bg-gray-100 text-gray-800'}`}
+                        className={`shrink-0 ${difficultyColors[course.difficulty_level.toLowerCase() as DifficultyLevel] || 'bg-gray-100 text-gray-800'}`}
                       >
                         {course.difficulty_level}
                       </Badge>
