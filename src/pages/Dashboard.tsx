@@ -16,7 +16,7 @@ export default function Dashboard() {
   const overallProgress = totalCourses > 0 ? (completedCourses / totalCourses) * 100 : 0;
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
+    <div className="w-full max-w-5xl mx-auto p-2 sm:p-4 md:p-6 space-y-8">
       {/* Welcome Section */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">Welcome back, {user?.user_metadata?.full_name || 'Student'}!</h1>
@@ -90,4 +90,4 @@ export default function Dashboard() {
       </Tabs>
     </div>
   );
-} 
+}

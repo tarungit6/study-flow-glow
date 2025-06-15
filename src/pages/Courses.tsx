@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useEnrollments } from '@/hooks/api/useCourses';
@@ -44,7 +43,7 @@ export default function Courses() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-8">
+      <div className="w-full max-w-5xl mx-auto p-2 sm:p-4 md:p-6 space-y-8">
         <div className="flex items-center justify-between mb-4">
           <Skeleton className="h-8 w-40" />
           <Skeleton className="h-10 w-32" />
@@ -66,7 +65,7 @@ export default function Courses() {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="w-full max-w-5xl mx-auto p-2 sm:p-4 md:p-6 space-y-8">
         <Alert variant="destructive">
           <Terminal className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -106,7 +105,7 @@ export default function Courses() {
   
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="w-full max-w-5xl mx-auto p-2 sm:p-4 md:p-6 space-y-8">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">My Courses</h1>
         <Link to="/" className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition">Back to Home</Link>

@@ -33,7 +33,6 @@ function LayoutContent({ children }: LayoutProps) {
   };
 
   useEffect(() => {
-    // Prevent redirect loops: Only redirect instructors to '/instructor' when they're on '/'.
     if (profile) {
       if (
         profile.role === "instructor" &&
@@ -41,18 +40,16 @@ function LayoutContent({ children }: LayoutProps) {
       ) {
         navigate("/instructor", { replace: true });
       }
-      // No automatic redirect for instructor on other subroutes.
       else if (profile.role !== "instructor" && location.pathname === "/instructor") {
-        // Non-instructor profile on instructor route goes to home (or their allowed default)
         navigate("/", { replace: true });
       }
     }
   }, [profile, navigate, location.pathname]);
 
   return (
-    <div className="min-h-screen flex w-full bg-background">
+    <div className="min-h-screen w-full max-w-full flex bg-background overflow-x-hidden">
       <AppSidebar />
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col min-w-0 max-w-full">
         {/* Header */}
         <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="flex h-16 items-center justify-between px-4 md:px-6">
@@ -79,7 +76,6 @@ function LayoutContent({ children }: LayoutProps) {
                 </Badge>
               </Button>
               <ThemeToggle />
-              
               {/* User dropdown with logout */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -108,9 +104,8 @@ function LayoutContent({ children }: LayoutProps) {
             </div>
           </div>
         </header>
-        
         {/* Main Content */}
-        <div className="flex-1 p-4 md:p-6">
+        <div className="flex-1 flex flex-col w-full max-w-full p-2 sm:p-4 md:p-6 mx-auto">
           {children}
         </div>
       </main>
@@ -125,4 +120,3 @@ export function Layout({ children }: LayoutProps) {
     </SidebarProvider>
   );
 }
-
