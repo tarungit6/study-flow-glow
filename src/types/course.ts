@@ -1,3 +1,4 @@
+
 export interface Instructor {
   id: string;
   full_name: string;
@@ -13,16 +14,16 @@ export interface Course {
   grade_level: string;
   topic: string;
   difficulty: string;
-  difficulty_level: string;
-  category: string;
-  duration_hours: number;
+  difficulty_level?: string;
+  category?: string;
+  duration_hours?: number;
   concepts: string[];
   is_published: boolean;
   instructor_id: string;
   instructor: Instructor;
   created_at: string;
   updated_at: string;
-  enrollments: Array<{ id: string }>;
+  enrollments?: Array<{ id: string }>;
 }
 
 export interface Enrollment {
@@ -34,4 +35,4 @@ export interface Enrollment {
   completed_at: string | null;
   progress_percentage: number;
   status: 'active' | 'completed' | 'dropped' | 'pending';
-} 
+}

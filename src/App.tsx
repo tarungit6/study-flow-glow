@@ -19,6 +19,7 @@ import Assignments from "./pages/Assignments";
 import Courses from "./pages/Courses";
 import BrowseCourses from "./pages/BrowseCourses";
 import Schedule from "./pages/Schedule";
+import { CourseDetail } from "./components/CourseDetail";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,11 @@ const App = () => (
             <Route path="/browse-courses" element={
               <ProtectedRoute>
                 <BrowseCourses />
+              </ProtectedRoute>
+            } />
+            <Route path="/course/:id" element={
+              <ProtectedRoute>
+                <CourseDetail />
               </ProtectedRoute>
             } />
             <Route path="/schedule" element={

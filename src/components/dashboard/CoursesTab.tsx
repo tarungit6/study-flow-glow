@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useEnrollments } from '@/hooks/api/useCourses';
@@ -5,13 +6,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, User, Clock, Star, ArrowRight } from 'lucide-react';
+import { BookOpen, User, Clock, Star, ArrowRight, ExternalLink } from 'lucide-react';
 import type { Enrollment } from '@/types/course';
 
 const difficultyColors = {
-  'beginner': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  'intermediate': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-  'advanced': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  'easy': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  'medium': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+  'hard': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
 } as const;
 
 export function CoursesTab() {
@@ -25,8 +26,8 @@ export function CoursesTab() {
 
   // Get counts for overview
   const totalEnrolled = validEnrollments.length;
-  const beginnerCourses = validEnrollments.filter(e => e.course?.difficulty_level?.toLowerCase() === 'beginner').length;
-  const advancedCourses = validEnrollments.filter(e => e.course?.difficulty_level?.toLowerCase() === 'advanced').length;
+  const easyCourses = validEnrollments.filter(e => e.course?.difficulty?.toLowerCase() === 'easy').length;
+  const hardCourses = validEnrollments.filter(e => e.course?.difficulty?.toLowerCase() === 'hard').length;
 
   if (isLoading) {
     return (
@@ -81,10 +82,10 @@ export function CoursesTab() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Beginner Friendly</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Easy Courses</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{beginnerCourses}</div>
+            <div className="text-2xl font-bold">{easyCourses}</div>
           </CardContent>
         </Card>
         <Card>
@@ -92,7 +93,7 @@ export function CoursesTab() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Advanced Level</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{advancedCourses}</div>
+            <div className="text-2xl font-bold">{hardCourses}</div>
           </CardContent>
         </Card>
       </div>
@@ -102,7 +103,7 @@ export function CoursesTab() {
         <div className="text-center py-12">
           <h3 className="text-lg font-medium mb-2">No Enrolled Courses</h3>
           <p className="text-muted-foreground mb-4">You haven't enrolled in any courses yet.</p>
-          <Button asChild>
+          <Button asChild className="bg-purple-600 hover:bg-purple-700">
             <Link to="/browse-courses">Browse Courses</Link>
           </Button>
         </div>
@@ -113,15 +114,15 @@ export function CoursesTab() {
             if (!course) return null;
 
             return (
-              <Card key={enrollment.id} className="flex flex-col hover:shadow-lg transition-shadow">
+              <Card key={enrollment.id} className="flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-200">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
-                    {course.difficulty_level && (
+                    {course.difficulty && (
                       <Badge 
-                        className={`shrink-0 ${difficultyColors[course.difficulty_level.toLowerCase() as keyof typeof difficultyColors] || 'bg-gray-100 text-gray-800'}`}
+                        className={`shrink-0 ${difficultyColors[course.difficulty.toLowerCase() as keyof typeof difficultyColors] || 'bg-gray-100 text-gray-800'}`}
                       >
-                        {course.difficulty_level}
+                        {course.difficulty}
                       </Badge>
                     )}
                   </div>
@@ -139,33 +140,32 @@ export function CoursesTab() {
                   </CardDescription>
                   
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    {course.category && (
+                    {course.subject && (
                       <div className="flex items-center gap-1">
                         <BookOpen className="h-3 w-3" />
-                        <span>{course.category}</span>
+                        <span>{course.subject}</span>
                       </div>
                     )}
-                    {course.duration_hours && course.duration_hours > 0 && (
+                    {course.content_type && (
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        <span>{course.duration_hours}h</span>
-                      </div>
-                    )}
-                    {course.enrollments && course.enrollments.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3" />
-                        <span>{course.enrollments.length} enrolled</span>
+                        <span>{course.content_type}</span>
                       </div>
                     )}
                   </div>
                 </CardContent>
 
                 <CardFooter>
-                  <Button asChild className="w-full">
-                    <Link to={`/courses/${course.id}`} className="flex items-center justify-center gap-2">
+                  <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
+                    <a 
+                      href={course.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2"
+                    >
                       <span>Continue Learning</span>
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
                   </Button>
                 </CardFooter>
               </Card>
