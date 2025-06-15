@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useEnrollments } from '@/hooks/api/useCourses';
@@ -74,11 +73,15 @@ export default function Courses() {
     );
   }
   
-  const courses = enrollments?.filter(e => e.course).map(enrollment => ({
+  // Only keep enrollments with a valid course object (not an error object)
+  const courses = enrollments?.filter(e => {
+    // course should be object and have an id (not an error object)
+    return e.course && typeof e.course === 'object' && 'id' in e.course;
+  }).map(enrollment => ({
     id: enrollment.course.id,
     title: enrollment.course.title,
     instructor: enrollment.course.instructor?.full_name || 'N/A',
-    progress: enrollment.progress_percentage ? Number(enrollment.progress_percentage) : 0,
+    progress: typeof enrollment.progress_percentage === 'number' ? enrollment.progress_percentage : 0,
     color: categoryColors(enrollment.course.subject || 'General'),
     badge: enrollment.course.difficulty || 'Medium',
     url: enrollment.course.url,
