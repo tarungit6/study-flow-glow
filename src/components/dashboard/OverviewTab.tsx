@@ -3,16 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Target, Zap } from "lucide-react";
+import { Calendar, Clock, Target, Zap, BookOpen, Trophy } from "lucide-react";
 import { DailyGoalTracker } from "./DailyGoalTracker";
 import { AIRecommendations } from "./AIRecommendations";
 import { QuickStats } from "./QuickStats";
 
 export function OverviewTab() {
   const recentActivities = [
-    { action: "Completed", subject: "Calculus Integration", time: "2 hours ago", type: "lesson" },
-    { action: "Quiz scored 92%", subject: "Data Structures", time: "Yesterday", type: "quiz" },
-    { action: "Started", subject: "Quantum Mechanics", time: "2 days ago", type: "lesson" },
+    { action: "Completed", subject: "Calculus Integration", time: "2 hours ago", type: "lesson", icon: "✅" },
+    { action: "Quiz scored 92%", subject: "Data Structures", time: "Yesterday", type: "quiz", icon: "🎯" },
+    { action: "Started", subject: "Quantum Mechanics", time: "2 days ago", type: "lesson", icon: "🚀" },
   ];
 
   const upcomingDeadlines = [
@@ -22,35 +22,34 @@ export function OverviewTab() {
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
       {/* Main Content */}
-      <div className="lg:col-span-2 space-y-6">
+      <div className="xl:col-span-2 space-y-8">
         <QuickStats />
         <DailyGoalTracker />
         <AIRecommendations />
         
         {/* Recent Activity */}
-        <Card className="gradient-card border-0">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
+        <Card className="border-0 shadow-xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-xl">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl">
+                <Clock className="w-5 h-5 text-white" />
+              </div>
               Recent Activity
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             {recentActivities.map((activity, index) => (
-              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-background/50 hover:bg-background/70 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${
-                    activity.type === 'lesson' ? 'bg-blue-500' : 
-                    activity.type === 'quiz' ? 'bg-green-500' : 'bg-purple-500'
-                  }`}></div>
-                  <div>
-                    <p className="font-medium text-sm">{activity.action}</p>
-                    <p className="text-xs text-muted-foreground">{activity.subject}</p>
-                  </div>
+              <div key={index} className="flex items-center gap-4 p-4 rounded-2xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-white/20 dark:border-slate-700/30 hover:bg-white/70 dark:hover:bg-slate-800/70 transition-all duration-200">
+                <div className="text-2xl">{activity.icon}</div>
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">{activity.action}</p>
+                  <p className="text-sm text-muted-foreground">{activity.subject}</p>
                 </div>
-                <span className="text-xs text-muted-foreground">{activity.time}</span>
+                <span className="text-xs text-muted-foreground bg-white/50 dark:bg-slate-700/50 px-3 py-1 rounded-full">
+                  {activity.time}
+                </span>
               </div>
             ))}
           </CardContent>
@@ -58,40 +57,48 @@ export function OverviewTab() {
       </div>
 
       {/* Right Sidebar */}
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Upcoming Deadlines */}
-        <Card className="gradient-card border-0">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Calendar className="w-5 h-5" />
+        <Card className="border-0 shadow-xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-lg">
+              <div className="p-2 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl">
+                <Calendar className="w-5 h-5 text-white" />
+              </div>
               Deadlines
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             {upcomingDeadlines.map((deadline, index) => (
-              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-background/50">
-                <div>
-                  <p className="font-medium text-sm">{deadline.title}</p>
-                  <p className="text-xs text-muted-foreground">{deadline.course}</p>
+              <div key={index} className="p-4 rounded-2xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-white/20 dark:border-slate-700/30">
+                <div className="flex items-start justify-between mb-2">
+                  <p className="font-semibold text-sm">{deadline.title}</p>
+                  <Badge 
+                    variant={deadline.urgent ? "destructive" : "secondary"}
+                    className="rounded-full"
+                  >
+                    {deadline.dueDate}
+                  </Badge>
                 </div>
-                <Badge variant={deadline.urgent ? "destructive" : "secondary"}>
-                  {deadline.dueDate}
-                </Badge>
+                <p className="text-xs text-muted-foreground">{deadline.course}</p>
               </div>
             ))}
           </CardContent>
         </Card>
 
         {/* Study Streak */}
-        <Card className="gradient-card border-0">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 gradient-secondary rounded-full flex items-center justify-center">
-                <span className="text-2xl">🔥</span>
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-yellow-400/20 to-orange-500/20 backdrop-blur-xl">
+          <CardContent className="p-6 text-center">
+            <div className="space-y-4">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl flex items-center justify-center shadow-lg animate-pulse">
+                <span className="text-3xl">🔥</span>
               </div>
-              <h3 className="font-bold text-2xl mb-1">7 Days</h3>
-              <p className="text-sm text-muted-foreground mb-3">Study Streak</p>
-              <Button size="sm" className="gradient-primary border-0 text-white">
+              <div>
+                <h3 className="font-bold text-3xl mb-1 bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">7 Days</h3>
+                <p className="text-sm text-muted-foreground font-medium">Study Streak</p>
+              </div>
+              <Button className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 border-0 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl">
+                <Trophy className="w-4 h-4 mr-2" />
                 Keep Going!
               </Button>
             </div>
@@ -99,18 +106,22 @@ export function OverviewTab() {
         </Card>
 
         {/* Quick Actions */}
-        <Card className="gradient-card border-0">
-          <CardHeader>
+        <Card className="border-0 shadow-xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl">
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg">Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <Button variant="outline" className="w-full justify-start">
-              <Target className="w-4 h-4 mr-2" />
+          <CardContent className="space-y-3">
+            <Button variant="outline" className="w-full justify-start rounded-xl border-white/20 dark:border-slate-700/30 bg-white/30 dark:bg-slate-800/30 backdrop-blur-sm hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all duration-200">
+              <Target className="w-4 h-4 mr-3" />
               Take Practice Test
             </Button>
-            <Button variant="outline" className="w-full justify-start">
-              <Zap className="w-4 h-4 mr-2" />
+            <Button variant="outline" className="w-full justify-start rounded-xl border-white/20 dark:border-slate-700/30 bg-white/30 dark:bg-slate-800/30 backdrop-blur-sm hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all duration-200">
+              <Zap className="w-4 h-4 mr-3" />
               Review Weak Topics
+            </Button>
+            <Button variant="outline" className="w-full justify-start rounded-xl border-white/20 dark:border-slate-700/30 bg-white/30 dark:bg-slate-800/30 backdrop-blur-sm hover:bg-white/50 dark:hover:bg-slate-800/50 transition-all duration-200">
+              <BookOpen className="w-4 h-4 mr-3" />
+              Browse New Courses
             </Button>
           </CardContent>
         </Card>

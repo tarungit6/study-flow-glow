@@ -6,27 +6,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, User, Clock, Star, ArrowRight, ExternalLink } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { BookOpen, User, Clock, Star, ArrowRight, ExternalLink, GraduationCap } from 'lucide-react';
 import type { Enrollment } from '@/types/course';
 import type { Course } from '@/types/course';
 
 const difficultyColors = {
-  'easy': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  'medium': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-  'hard': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  'easy': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+  'medium': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+  'hard': 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 border-rose-200 dark:border-rose-800',
 } as const;
 
 export function CoursesTab() {
   const { data: enrollments, isLoading } = useEnrollments();
 
-  // Filter out enrollments with null course data and cast to Enrollment type
   const validEnrollments = React.useMemo(() => {
     if (!enrollments) return [] as Enrollment[];
     return enrollments.filter(e => e.content) as unknown as Enrollment[];
-
   }, [enrollments]);
 
-  // Get counts for overview
   const totalEnrolled = validEnrollments.length;
   const easyCourses = validEnrollments.filter(e => e.content?.difficulty?.toLowerCase() === 'easy').length;
   const hardCourses = validEnrollments.filter(e => e.content?.difficulty?.toLowerCase() === 'hard').length;
@@ -35,10 +33,10 @@ export function CoursesTab() {
     return (
       <div className="space-y-8">
         {/* Overview Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="pb-2">
+            <Card key={i} className="border-0 shadow-lg">
+              <CardHeader className="pb-3">
                 <Skeleton className="h-4 w-24" />
               </CardHeader>
               <CardContent>
@@ -49,16 +47,17 @@ export function CoursesTab() {
         </div>
 
         {/* Course Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <Card key={i} className="flex flex-col">
+            <Card key={i} className="border-0 shadow-lg">
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
               </CardHeader>
-              <CardContent className="flex-1">
-                <Skeleton className="h-4 w-full mb-2" />
+              <CardContent className="space-y-3">
+                <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-2 w-full" />
               </CardContent>
               <CardFooter>
                 <Skeleton className="h-10 w-full" />
@@ -73,73 +72,106 @@ export function CoursesTab() {
   return (
     <div className="space-y-8">
       {/* Overview Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active Courses</CardTitle>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              Active Courses
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalEnrolled}</div>
+            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalEnrolled}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Easy Courses</CardTitle>
+        
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <GraduationCap className="w-4 h-4" />
+              Beginner Level
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{easyCourses}</div>
+            <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{easyCourses}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Advanced Level</CardTitle>
+        
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-950/30 dark:to-red-950/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Star className="w-4 h-4" />
+              Advanced Level
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{hardCourses}</div>
+            <div className="text-3xl font-bold text-rose-600 dark:text-rose-400">{hardCourses}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Course Cards */}
       {validEnrollments.length === 0 ? (
-        <div className="text-center py-12">
-          <h3 className="text-lg font-medium mb-2">No Enrolled Courses</h3>
-          <p className="text-muted-foreground mb-4">You haven't enrolled in any courses yet.</p>
-          <Button asChild className="bg-purple-600 hover:bg-purple-700">
-            <Link to="/browse-courses">Browse Courses</Link>
-          </Button>
-        </div>
+        <Card className="border-0 shadow-xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl">
+          <CardContent className="text-center py-16">
+            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-3xl flex items-center justify-center">
+              <BookOpen className="h-10 w-10 text-white" />
+            </div>
+            <h3 className="text-xl font-bold mb-3">No Enrolled Courses</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              You haven't enrolled in any courses yet. Start your learning journey today!
+            </p>
+            <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 border-0 text-white rounded-xl shadow-lg">
+              <Link to="/browse-courses">
+                <BookOpen className="w-4 h-4 mr-2" />
+                Browse Courses
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {validEnrollments.map((enrollment) => {
             const content = enrollment.content as Course;
             if (!content) return null;
 
+            const progress = typeof enrollment.progress_percentage === 'number' ? enrollment.progress_percentage : 0;
+
             return (
-              <Card key={enrollment.id} className="flex flex-col hover:shadow-xl hover:scale-105 transition-all duration-200">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-lg line-clamp-2">{content.title}</CardTitle>
+              <Card key={enrollment.id} className="group border-0 shadow-xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden">
+                <CardHeader className="pb-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <CardTitle className="text-lg line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      {content.title}
+                    </CardTitle>
                     {content.difficulty && (
                       <Badge 
-                        className={`shrink-0 ${difficultyColors[content.difficulty.toLowerCase() as keyof typeof difficultyColors] || 'bg-gray-100 text-gray-800'}`}
+                        className={`shrink-0 rounded-full border ${difficultyColors[content.difficulty.toLowerCase() as keyof typeof difficultyColors] || 'bg-gray-100 text-gray-800 border-gray-200'}`}
                       >
                         {content.difficulty}
                       </Badge>
                     )}
                   </div>
                   {content.instructor && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <User className="h-3 w-3" />
                       <span>{content.instructor.full_name}</span>
                     </div>
                   )}
                 </CardHeader>
                 
-                <CardContent className="flex-1">
-                  <CardDescription className="line-clamp-3 mb-4">
-                    {content.description || 'No description available.'}
+                <CardContent className="space-y-4">
+                  <CardDescription className="line-clamp-3">
+                    {content.description || 'Expand your knowledge with this comprehensive course.'}
                   </CardDescription>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Progress</span>
+                      <span className="font-semibold">{progress}%</span>
+                    </div>
+                    <Progress value={progress} className="h-2" />
+                  </div>
                   
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     {content.subject && (
@@ -157,8 +189,8 @@ export function CoursesTab() {
                   </div>
                 </CardContent>
 
-                <CardFooter>
-                  <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
+                <CardFooter className="pt-4">
+                  <Button asChild className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 border-0 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl">
                     <a 
                       href={content.url} 
                       target="_blank" 
