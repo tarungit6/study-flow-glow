@@ -73,18 +73,19 @@ export default function Courses() {
     );
   }
   
-  // Only keep enrollments with a valid course object (not an error object)
-  const courses = enrollments?.filter(e => {
-    // Check if course exists, is an object, and has required properties
-    return e.course && 
-           e.course !== null &&
-           typeof e.course === 'object' && 
-           'id' in e.course && 
-           'title' in e.course &&
-           !('message' in e.course); // Exclude error objects
-  }).map(enrollment => {
-    // At this point we know course is valid, but TypeScript still needs assertion
-    const course = enrollment.course!; // Non-null assertion since we filtered above
+  // Helper function to check if enrollment has a valid course
+  const hasValidCourse = (enrollment: any): enrollment is { course: { id: string; title: string; instructor?: { full_name: string }; subject?: string; difficulty?: string; url?: string } } => {
+    return enrollment.course && 
+           enrollment.course !== null &&
+           typeof enrollment.course === 'object' && 
+           'id' in enrollment.course && 
+           'title' in enrollment.course &&
+           !('message' in enrollment.course);
+  };
+
+  // Filter enrollments with valid courses and map to course data
+  const courses = enrollments?.filter(hasValidCourse).map(enrollment => {
+    const course = enrollment.course;
     return {
       id: course.id,
       title: course.title,
