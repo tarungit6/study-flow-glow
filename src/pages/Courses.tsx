@@ -7,22 +7,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Terminal, BookOpen, User, ExternalLink } from 'lucide-react';
-import { Layout } from '@/components/Layout';
+import type { Enrollment } from '@/types/course';
 
-interface ValidCourse {
-  id: string;
-  title: string;
-  instructor?: { full_name: string } | null;
-  subject?: string | null;
-  difficulty?: string | null;
-  url: string;
-}
-
-interface ValidEnrollment {
-  id: string;
-  progress_percentage: number;
-  course: ValidCourse;
-}
 
 const difficultyBadgeColors = (difficulty: string | null | undefined) => {
   switch (difficulty?.toLowerCase()) {
@@ -51,84 +37,82 @@ const categoryColors = (category: string | null | undefined) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-const hasValidCourse = (enrollment: any): enrollment is ValidEnrollment => {
-  return enrollment.course &&
-         typeof enrollment.course === 'object' &&
-         'id' in enrollment.course &&
-         'title' in enrollment.course &&
-         'url' in enrollment.course &&
-         !('message' in enrollment.course);
-};
+
 
 export default function Courses() {
   const { data: enrollments, isLoading, error } = useEnrollments();
 
   if (isLoading) {
     return (
-      <Layout>
-        <div className="w-full max-w-7xl mx-auto space-y-8">
-          <div className="flex items-center justify-between mb-4">
-            <Skeleton className="h-8 w-40" />
-            <Skeleton className="h-10 w-32" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="rounded-xl shadow p-5 bg-gray-100 dark:bg-gray-800 flex flex-col gap-3">
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-2 w-full rounded-full" />
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-9 w-full mt-2" />
-              </div>
-            ))}
-          </div>
+      <div className="p-6 space-y-8">
+        <div className="flex items-center justify-between mb-4">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-10 w-32" />
         </div>
-      </Layout>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="rounded-xl shadow p-5 bg-gray-100 dark:bg-gray-800 flex flex-col gap-3">
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-2 w-full rounded-full" />
+              <Skeleton className="h-4 w-1/4" />
+              <Skeleton className="h-9 w-full mt-2" />
+            </div>
+          ))}
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Layout>
-        <div className="w-full max-w-7xl mx-auto p-6">
-          <Alert variant="destructive">
-            <Terminal className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>
-              Failed to load courses: {error.message}
-            </AlertDescription>
-          </Alert>
-        </div>
-      </Layout>
+      <div className="p-6">
+        <Alert variant="destructive">
+          <Terminal className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Failed to load courses: {error.message}
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
+  
+  const hasValidContent = (enrollment: any): enrollment is Enrollment => {
+    return enrollment.content &&
+           typeof enrollment.content === 'object' &&
+           'id' in enrollment.content &&
+           'title' in enrollment.content &&
+           !('message' in enrollment.content);
+  };
+  
 
-  // Filter enrollments with valid courses
-  const validEnrollments = (enrollments || []).filter(hasValidCourse);
+  // Filter enrollments with valid courses and map to course data
+  const validEnrollments = (enrollments || []).filter(hasValidContent);
 
-  // Map to course data
+
   const courses = validEnrollments.map(enrollment => {
-    const course = enrollment.course;
+    const content = enrollment.content;
     return {
-      id: course.id,
-      title: course.title,
-      instructor: course.instructor?.full_name ?? 'N/A',
+      id: content.id,
+      title: content.title,
+      instructor: content.instructor?.full_name ?? 'N/A',
       progress: typeof enrollment.progress_percentage === 'number' ? enrollment.progress_percentage : 0,
-      color: categoryColors(course.subject ?? 'General'),
-      badge: course.difficulty || 'Medium',
-      url: course.url,
+      color: categoryColors(content.subject ?? 'General'),
+      badge: content.difficulty || 'Medium',
+      url: content.url,
     };
   });
+  
 
   return (
-    <Layout>
-      <div className="w-full max-w-7xl mx-auto space-y-8">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">My Courses</h1>
-          <Link to="/" className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition">Back to Home</Link>
-        </div>
-        {courses.length === 0 && !isLoading ? (
-          <div className="text-center py-12">
+    <div className="p-6 space-y-8">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">My Courses</h1>
+        <Link to="/" className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition">Back to Home</Link>
+      </div>
+      {courses.length === 0 && !isLoading ? (
+         <div className="text-center py-12">
             <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">No Enrolled Courses</h3>
             <p className="text-muted-foreground mb-4">You are not enrolled in any courses yet. Explore available courses to get started!</p>
@@ -136,40 +120,39 @@ export default function Courses() {
               <Link to="/browse-courses">Browse Courses</Link>
             </Button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course) => (
-              <div key={course.id} className={`rounded-xl shadow p-5 ${course.color} flex flex-col gap-2 hover:shadow-xl hover:scale-105 transition-all duration-200`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-lg text-gray-900 dark:text-white">{course.title}</span>
-                  <Badge className={`text-xs px-2 py-1 rounded-full bg-white/80 dark:bg-black/20 font-medium ${difficultyBadgeColors(course.badge)}`}>
-                    {course.badge}
-                  </Badge>
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-200 mb-2 flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  <span>Instructor: {course.instructor}</span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
-                  <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${course.progress}%` }}></div>
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-300">Progress: {course.progress}%</div>
-                <Button asChild className="mt-2 bg-purple-600 hover:bg-purple-700">
-                  <a 
-                    href={course.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2"
-                  >
-                    <span>Go to Course</span>
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </Button>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {courses.map((course) => (
+            <div key={course.id} className={`rounded-xl shadow p-5 ${course.color} flex flex-col gap-2 hover:shadow-xl hover:scale-105 transition-all duration-200`}>
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-lg text-gray-900 dark:text-white">{course.title}</span>
+                <Badge className={`text-xs px-2 py-1 rounded-full bg-white/80 dark:bg-black/20 font-medium ${difficultyBadgeColors(course.badge)}`}>
+                  {course.badge}
+                </Badge>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </Layout>
+              <div className="text-sm text-gray-600 dark:text-gray-200 mb-2 flex items-center gap-1">
+                <User className="h-3 w-3" />
+                <span>Instructor: {course.instructor}</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${course.progress}%` }}></div>
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-300">Progress: {course.progress}%</div>
+              <Button asChild className="mt-2 bg-purple-600 hover:bg-purple-700">
+                <a 
+                  href={course.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2"
+                >
+                  <span>Go to Course</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
