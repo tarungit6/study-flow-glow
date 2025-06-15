@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useEnrollments } from '@/hooks/api/useCourses';
@@ -78,6 +79,7 @@ export default function Courses() {
   const courses = enrollments?.filter(e => {
     // Check if course exists, is an object, and has required properties
     return e.course && 
+           e.course !== null &&
            typeof e.course === 'object' && 
            'id' in e.course && 
            'title' in e.course &&
@@ -146,3 +148,4 @@ export default function Courses() {
     </div>
   );
 }
+
