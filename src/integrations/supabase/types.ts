@@ -472,7 +472,7 @@ export type Database = {
             foreignKeyName: "enrollments_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
-            referencedRelation: "courses"
+            referencedRelation: "educational_content"
             referencedColumns: ["id"]
           },
           {

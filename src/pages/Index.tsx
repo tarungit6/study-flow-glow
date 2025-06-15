@@ -1,10 +1,13 @@
-import { Layout } from "@/components/Layout";
+
 import { Dashboard } from "@/components/Dashboard";
+import { Layout } from "@/components/Layout";
 
 const Index = () => {
   return (
     <Layout>
-      <Dashboard />
+      <div className="w-full max-w-none">
+        <Dashboard />
+      </div>
     </Layout>
   );
 };
