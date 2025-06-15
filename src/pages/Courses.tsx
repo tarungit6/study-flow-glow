@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useEnrollments } from '@/hooks/api/useCourses';
@@ -75,17 +76,24 @@ export default function Courses() {
   
   // Only keep enrollments with a valid course object (not an error object)
   const courses = enrollments?.filter(e => {
-    // course should be object and have an id (not an error object)
-    return e.course && typeof e.course === 'object' && 'id' in e.course;
-  }).map(enrollment => ({
-    id: enrollment.course.id,
-    title: enrollment.course.title,
-    instructor: enrollment.course.instructor?.full_name || 'N/A',
-    progress: typeof enrollment.progress_percentage === 'number' ? enrollment.progress_percentage : 0,
-    color: categoryColors(enrollment.course.subject || 'General'),
-    badge: enrollment.course.difficulty || 'Medium',
-    url: enrollment.course.url,
-  })) || [];
+    // Check if course exists, is an object, and has required properties
+    return e.course && 
+           typeof e.course === 'object' && 
+           'id' in e.course && 
+           'title' in e.course &&
+           !('message' in e.course); // Exclude error objects
+  }).map(enrollment => {
+    const course = enrollment.course as any; // Type assertion since we've verified it's valid
+    return {
+      id: course.id,
+      title: course.title,
+      instructor: course.instructor?.full_name || 'N/A',
+      progress: typeof enrollment.progress_percentage === 'number' ? enrollment.progress_percentage : 0,
+      color: categoryColors(course.subject || 'General'),
+      badge: course.difficulty || 'Medium',
+      url: course.url,
+    };
+  }) || [];
 
   return (
     <div className="p-6 space-y-8">
