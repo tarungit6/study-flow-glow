@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useEnrollments } from '@/hooks/api/useCourses';
@@ -33,6 +34,20 @@ const categoryColors = (category: string | null | undefined) => {
   ];
   return colors[Math.abs(hash) % colors.length];
 };
+
+interface ValidCourse {
+  id: string;
+  title: string;
+  instructor?: { full_name: string };
+  subject?: string;
+  difficulty?: string;
+  url?: string;
+}
+
+interface ValidEnrollment {
+  course: ValidCourse;
+  progress_percentage?: number;
+}
 
 export default function Courses() {
   const { data: enrollments, isLoading, error } = useEnrollments();
@@ -74,7 +89,7 @@ export default function Courses() {
   }
   
   // Helper function to check if enrollment has a valid course
-  const hasValidCourse = (enrollment: any): enrollment is { course: { id: string; title: string; instructor?: { full_name: string }; subject?: string; difficulty?: string; url?: string } } => {
+  const hasValidCourse = (enrollment: any): enrollment is ValidEnrollment => {
     return enrollment.course && 
            enrollment.course !== null &&
            typeof enrollment.course === 'object' && 
@@ -84,7 +99,9 @@ export default function Courses() {
   };
 
   // Filter enrollments with valid courses and map to course data
-  const courses = enrollments?.filter(hasValidCourse).map(enrollment => {
+  const validEnrollments = enrollments?.filter(hasValidCourse) || [];
+  
+  const courses = validEnrollments.map(enrollment => {
     const course = enrollment.course;
     return {
       id: course.id,
@@ -95,7 +112,7 @@ export default function Courses() {
       badge: course.difficulty || 'Medium',
       url: course.url,
     };
-  }) || [];
+  });
 
   return (
     <div className="p-6 space-y-8">
