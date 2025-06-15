@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CoursesTab } from '@/components/dashboard/CoursesTab';
@@ -16,7 +17,7 @@ export default function Dashboard() {
   const overallProgress = totalCourses > 0 ? (completedCourses / totalCourses) * 100 : 0;
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
+    <div className="w-full max-w-7xl mx-auto space-y-8">
       {/* Welcome Section */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">Welcome back, {user?.user_metadata?.full_name || 'Student'}!</h1>
@@ -24,7 +25,7 @@ export default function Dashboard() {
       </div>
 
       {/* Progress Overview */}
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Learning Progress</CardTitle>
           <CardDescription>Your overall course completion status</CardDescription>
@@ -51,18 +52,18 @@ export default function Dashboard() {
       </Card>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="courses" className="space-y-4">
-        <TabsList>
+      <Tabs defaultValue="courses" className="w-full space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="courses">My Courses</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
           <TabsTrigger value="achievements">Achievements</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="courses">
+        <TabsContent value="courses" className="w-full">
           <CoursesTab />
         </TabsContent>
         
-        <TabsContent value="progress">
+        <TabsContent value="progress" className="w-full">
           <Card>
             <CardHeader>
               <CardTitle>Detailed Progress</CardTitle>
@@ -75,7 +76,7 @@ export default function Dashboard() {
           </Card>
         </TabsContent>
         
-        <TabsContent value="achievements">
+        <TabsContent value="achievements" className="w-full">
           <Card>
             <CardHeader>
               <CardTitle>Achievements</CardTitle>
@@ -90,4 +91,4 @@ export default function Dashboard() {
       </Tabs>
     </div>
   );
-} 
+}
