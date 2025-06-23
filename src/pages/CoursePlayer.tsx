@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useCourse } from '@/hooks/api/useCourses';
@@ -141,8 +140,8 @@ export default function CoursePlayer() {
               <BookOpen className="h-4 w-4" />
               <span>{lessons.length} lessons</span>
             </div>
-            {course.difficulty_level && (
-              <Badge variant="secondary">{course.difficulty_level}</Badge>
+            {course.difficulty && (
+              <Badge variant="secondary">{course.difficulty}</Badge>
             )}
           </div>
         </div>
