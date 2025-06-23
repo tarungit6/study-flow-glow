@@ -6,12 +6,14 @@ import { useAuth, UserRole } from '@/contexts/AuthContext';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: UserRole[];
+  requiredRole?: UserRole;
   requireAuth?: boolean;
 }
 
 export function ProtectedRoute({ 
   children, 
   allowedRoles, 
+  requiredRole,
   requireAuth = true 
 }: ProtectedRouteProps) {
   const { user, profile, loading } = useAuth();
@@ -29,7 +31,9 @@ export function ProtectedRoute({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
+  // Check for requiredRole or allowedRoles
+  const rolesToCheck = requiredRole ? [requiredRole] : allowedRoles;
+  if (rolesToCheck && profile && !rolesToCheck.includes(profile.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
