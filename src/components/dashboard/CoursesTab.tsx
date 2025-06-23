@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, User, Clock, Star, ArrowRight, ExternalLink, GraduationCap } from 'lucide-react';
+import { BookOpen, User, Clock, Star, ArrowRight, Play, GraduationCap } from 'lucide-react';
 import type { Enrollment } from '@/types/course';
 import type { Course } from '@/types/course';
 
@@ -191,15 +191,13 @@ export function CoursesTab() {
 
                 <CardFooter className="pt-4">
                   <Button asChild className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 border-0 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl">
-                    <a 
-                      href={content.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
+                    <Link 
+                      to={`/course/${content.id}`}
                       className="flex items-center justify-center gap-2"
                     >
+                      <Play className="h-4 w-4" />
                       <span>Continue Learning</span>
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
+                    </Link>
                   </Button>
                 </CardFooter>
               </Card>
