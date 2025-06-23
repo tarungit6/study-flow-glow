@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useCourse } from '@/hooks/api/useCourses';
@@ -16,11 +17,11 @@ import { ArrowLeft, User, BookOpen, Clock, Star } from 'lucide-react';
 interface Lesson {
   id: string;
   title: string;
-  content: string; // This is what the database returns
+  content: string;
   video_url: string;
   duration_minutes: number;
   order_index: number;
-  course_id: string;
+  module_id: string | null;
   created_at: string;
 }
 
@@ -156,7 +157,7 @@ export default function CoursePlayer() {
               lesson={{
                 id: currentLesson.id,
                 title: currentLesson.title,
-                description: currentLesson.content, // Map content to description
+                description: currentLesson.content,
                 video_url: currentLesson.video_url,
                 duration_minutes: currentLesson.duration_minutes
               }}
@@ -210,7 +211,7 @@ export default function CoursePlayer() {
             lessons={lessons.map(lesson => ({
               id: lesson.id,
               title: lesson.title,
-              description: lesson.content, // Map content to description
+              description: lesson.content,
               duration_minutes: lesson.duration_minutes,
               order_index: lesson.order_index
             }))}
