@@ -243,7 +243,7 @@ export type Database = {
             foreignKeyName: "course_lessons_module_id_fkey"
             columns: ["module_id"]
             isOneToOne: false
-            referencedRelation: "course_modules"
+            referencedRelation: "educational_content"
             referencedColumns: ["id"]
           },
         ]
@@ -281,7 +281,7 @@ export type Database = {
             foreignKeyName: "course_modules_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
-            referencedRelation: "courses"
+            referencedRelation: "educational_content"
             referencedColumns: ["id"]
           },
         ]
