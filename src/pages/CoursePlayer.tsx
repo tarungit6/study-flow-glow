@@ -13,13 +13,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ArrowLeft, User, BookOpen, Clock, Star } from 'lucide-react';
 
+// Define the lesson type based on the actual database schema
+interface Lesson {
+  id: string;
+  title: string;
+  content: string; // This is what the database returns
+  video_url: string;
+  duration_minutes: number;
+  order_index: number;
+  course_id: string;
+  created_at: string;
+}
+
 export default function CoursePlayer() {
   const { id } = useParams<{ id: string }>();
   const { data: course, isLoading: courseLoading, error: courseError } = useCourse(id!);
   const { data: lessons, isLoading: lessonsLoading } = useLessons(id!);
   const { data: progressLogs } = useProgressLogs();
   
-  const [currentLesson, setCurrentLesson] = useState<any>(null);
+  const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
 
   // Set the first lesson as default when lessons load
   useEffect(() => {
@@ -35,7 +47,7 @@ export default function CoursePlayer() {
       .map(log => log.lesson_id);
   }, [progressLogs]);
 
-  const handleLessonSelect = (lesson: any) => {
+  const handleLessonSelect = (lesson: Lesson) => {
     setCurrentLesson(lesson);
   };
 
@@ -129,8 +141,8 @@ export default function CoursePlayer() {
               <BookOpen className="h-4 w-4" />
               <span>{lessons.length} lessons</span>
             </div>
-            {course.difficulty && (
-              <Badge variant="secondary">{course.difficulty}</Badge>
+            {course.difficulty_level && (
+              <Badge variant="secondary">{course.difficulty_level}</Badge>
             )}
           </div>
         </div>
@@ -142,7 +154,13 @@ export default function CoursePlayer() {
         <div className="lg:col-span-2 space-y-6">
           {currentLesson && (
             <VideoPlayer 
-              lesson={currentLesson} 
+              lesson={{
+                id: currentLesson.id,
+                title: currentLesson.title,
+                description: currentLesson.content, // Map content to description
+                video_url: currentLesson.video_url,
+                duration_minutes: currentLesson.duration_minutes
+              }}
               onLessonComplete={handleLessonComplete}
             />
           )}
@@ -190,9 +208,20 @@ export default function CoursePlayer() {
         {/* Lesson Playlist */}
         <div>
           <LessonPlaylist
-            lessons={lessons}
+            lessons={lessons.map(lesson => ({
+              id: lesson.id,
+              title: lesson.title,
+              description: lesson.content, // Map content to description
+              duration_minutes: lesson.duration_minutes,
+              order_index: lesson.order_index
+            }))}
             currentLessonId={currentLesson?.id}
-            onLessonSelect={handleLessonSelect}
+            onLessonSelect={(lesson) => {
+              const originalLesson = lessons.find(l => l.id === lesson.id);
+              if (originalLesson) {
+                setCurrentLesson(originalLesson);
+              }
+            }}
             completedLessons={completedLessons}
           />
         </div>
