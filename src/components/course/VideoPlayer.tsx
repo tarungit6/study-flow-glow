@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Play, Pause, Volume2, VolumeX, Maximize, CheckCircle, RotateCcw } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, CheckCircle, RotateCcw, Sparkles } from 'lucide-react';
 import { useMarkLessonComplete } from '@/hooks/api/useLessons';
 
 interface VideoPlayerProps {
@@ -120,18 +120,22 @@ export function VideoPlayer({ lesson, onLessonComplete }: VideoPlayerProps) {
   const progress = duration ? (currentTime / duration) * 100 : 0;
 
   return (
-    <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-0 shadow-2xl overflow-hidden">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
+    <Card className="bg-slate-800/30 backdrop-blur-xl border-slate-700/50 overflow-hidden shadow-2xl">
+      <CardHeader className="pb-4 bg-gradient-to-r from-slate-800/50 to-slate-700/30">
+        <CardTitle className="text-2xl font-bold text-white flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-gradient-to-r from-teal-500/20 to-cyan-500/20">
+            <Play className="h-5 w-5 text-teal-400" />
+          </div>
           {lesson.title}
         </CardTitle>
-        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+        <p className="text-slate-300 leading-relaxed text-lg mt-2">
           {lesson.description}
         </p>
       </CardHeader>
       
-      <CardContent className="space-y-4">
-        <div className="relative bg-black rounded-2xl overflow-hidden shadow-2xl">
+      <CardContent className="space-y-6 p-6">
+        {/* Enhanced Video Container */}
+        <div className="relative bg-black rounded-2xl overflow-hidden shadow-2xl ring-1 ring-slate-700/50">
           <video
             ref={videoRef}
             src={lesson.video_url}
@@ -140,51 +144,56 @@ export function VideoPlayer({ lesson, onLessonComplete }: VideoPlayerProps) {
             onPause={() => setIsPlaying(false)}
           />
           
-          {/* Video Controls Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-6">
+          {/* Enhanced Video Controls Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-6">
             <div className="space-y-4">
-              {/* Progress Bar */}
+              {/* Enhanced Progress Bar */}
               <div 
-                className="w-full h-2 bg-white/20 rounded-full cursor-pointer group"
+                className="w-full h-3 bg-white/10 rounded-full cursor-pointer group relative overflow-hidden"
                 onClick={handleProgressClick}
               >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 rounded-full"></div>
                 <div 
-                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-150 group-hover:from-blue-400 group-hover:to-purple-400"
+                  className="h-full bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 rounded-full transition-all duration-150 shadow-lg shadow-teal-500/30"
                   style={{ width: `${progress}%` }}
+                />
+                <div 
+                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ left: `${progress}%`, transform: 'translateX(-50%) translateY(-50%)' }}
                 />
               </div>
               
-              {/* Controls */}
+              {/* Enhanced Controls */}
               <div className="flex items-center justify-between text-white">
                 <div className="flex items-center gap-4">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={togglePlay}
-                    className="text-white hover:bg-white/20 h-12 w-12 rounded-xl"
+                    className="text-white hover:bg-white/20 h-14 w-14 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20"
                   >
-                    {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                    {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
                   </Button>
                   
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={toggleMute}
-                    className="text-white hover:bg-white/20 h-10 w-10 rounded-lg"
+                    className="text-white hover:bg-white/20 h-12 w-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20"
                   >
                     {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                   </Button>
                   
-                  <span className="text-sm font-medium">
+                  <div className="text-sm font-medium bg-black/50 px-3 py-1.5 rounded-lg">
                     {formatTime(currentTime)} / {formatTime(duration)}
-                  </span>
+                  </div>
                 </div>
                 
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={toggleFullscreen}
-                  className="text-white hover:bg-white/20 h-10 w-10 rounded-lg"
+                  className="text-white hover:bg-white/20 h-12 w-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20"
                 >
                   <Maximize className="h-5 w-5" />
                 </Button>
@@ -193,24 +202,38 @@ export function VideoPlayer({ lesson, onLessonComplete }: VideoPlayerProps) {
           </div>
         </div>
         
-        {/* Lesson Info & Complete Button */}
+        {/* Enhanced Lesson Info & Complete Button */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-          <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
-            <div className="flex items-center gap-1">
-              <RotateCcw className="h-4 w-4" />
+          <div className="flex items-center gap-6 text-sm text-slate-400">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/30 rounded-lg border border-slate-600/30">
+              <RotateCcw className="h-4 w-4 text-slate-400" />
               <span>Duration: {lesson.duration_minutes} minutes</span>
             </div>
           </div>
           
-          {/* Floating Complete Button */}
+          {/* Enhanced Floating Complete Button */}
           {showCompleteButton && (
             <Button 
               onClick={handleMarkComplete}
               disabled={markLessonComplete.isPending}
-              className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3 rounded-xl font-semibold"
+              className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:via-teal-700 hover:to-cyan-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 px-8 py-4 rounded-2xl font-bold text-lg border border-emerald-500/30 hover:border-emerald-400/50 transform hover:scale-105"
             >
-              <CheckCircle className="h-5 w-5 mr-2" />
-              {markLessonComplete.isPending ? 'Marking Complete...' : 'Mark Complete & Continue'}
+              <div className="flex items-center gap-3">
+                {markLessonComplete.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Marking Complete...</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="p-1 rounded-full bg-white/20">
+                      <CheckCircle className="h-5 w-5" />
+                    </div>
+                    <span>Mark Complete & Continue</span>
+                    <Sparkles className="h-4 w-4 opacity-75" />
+                  </>
+                )}
+              </div>
             </Button>
           )}
         </div>
