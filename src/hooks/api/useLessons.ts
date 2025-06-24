@@ -1,31 +1,48 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+// ✅ Define type for a lesson explicitly
+export interface Lesson {
+  id: string;
+  title: string;
+  content: string;
+  video_url: string;
+  duration_minutes: number;
+  order_index: number;
+  module_id: string | null;
+  created_at: string;
+}
+
 export const useLessons = (courseId: string) => {
-  return useQuery({
+  return useQuery<Lesson[]>({
     queryKey: ['lessons', courseId],
-    queryFn: async () => {
-      console.log('Fetching lessons for course:', courseId);
-      
+    queryFn: async (): Promise<Lesson[]> => {
       const { data, error } = await supabase
         .from('course_lessons')
-        .select('*')
-        .eq('course_id', courseId)
-        .order('order_index', { ascending: true });
-
-      console.log('Lessons data:', data);
-      console.log('Error:', error);
+        .select(
+          `
+          id,
+          title,
+          content,
+          video_url,
+          duration_minutes,
+          order_index,
+          module_id,
+          created_at
+        `
+        );
 
       if (error) throw error;
-      return data || [];
+      return data as Lesson[];
     },
+    enabled: !!courseId,
   });
 };
 
+
 export const useLesson = (lessonId: string) => {
-  return useQuery({
+  return useQuery<Lesson>({
     queryKey: ['lesson', lessonId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -35,8 +52,9 @@ export const useLesson = (lessonId: string) => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Lesson;
     },
+    enabled: !!lessonId,
   });
 };
 
@@ -50,9 +68,6 @@ export const useMarkLessonComplete = () => {
         throw new Error('You must be logged in to mark lessons complete');
       }
 
-      console.log('Marking lesson complete:', lessonId);
-
-      // Create progress log entry
       const { data: progressData, error: progressError } = await supabase
         .from('progress_logs')
         .upsert({
@@ -66,11 +81,9 @@ export const useMarkLessonComplete = () => {
         .single();
 
       if (progressError) {
-        console.error('Progress log error:', progressError);
         throw new Error(progressError.message || 'Failed to mark lesson complete');
       }
 
-      console.log('Progress logged:', progressData);
       return progressData;
     },
     onSuccess: () => {
