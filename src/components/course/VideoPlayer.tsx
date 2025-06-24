@@ -2,8 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Play, Pause, Volume2, VolumeX, Maximize, CheckCircle } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import { Play, Pause, Volume2, VolumeX, Maximize, CheckCircle, RotateCcw } from 'lucide-react';
 import { useMarkLessonComplete } from '@/hooks/api/useLessons';
 
 interface VideoPlayerProps {
@@ -24,6 +23,7 @@ export function VideoPlayer({ lesson, onLessonComplete }: VideoPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [watchTime, setWatchTime] = useState(0);
+  const [showCompleteButton, setShowCompleteButton] = useState(false);
   
   const markLessonComplete = useMarkLessonComplete();
 
@@ -31,20 +31,27 @@ export function VideoPlayer({ lesson, onLessonComplete }: VideoPlayerProps) {
     const video = videoRef.current;
     if (!video) return;
 
-    const updateTime = () => setCurrentTime(video.currentTime);
-    const updateDuration = () => setDuration(video.duration);
-    const handleTimeUpdate = () => {
+    const updateTime = () => {
+      setCurrentTime(video.currentTime);
       setWatchTime(prev => prev + 1);
+      
+      // Show complete button when video is near the end (90% watched)
+      if (video.duration && video.currentTime / video.duration > 0.9) {
+        setShowCompleteButton(true);
+      }
     };
+    
+    const updateDuration = () => setDuration(video.duration);
+    const handleVideoEnd = () => setShowCompleteButton(true);
 
     video.addEventListener('timeupdate', updateTime);
     video.addEventListener('loadedmetadata', updateDuration);
-    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('ended', handleVideoEnd);
 
     return () => {
       video.removeEventListener('timeupdate', updateTime);
       video.removeEventListener('loadedmetadata', updateDuration);
-      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('ended', handleVideoEnd);
     };
   }, []);
 
@@ -95,9 +102,10 @@ export function VideoPlayer({ lesson, onLessonComplete }: VideoPlayerProps) {
     try {
       await markLessonComplete.mutateAsync({
         lessonId: lesson.id,
-        timeSpent: Math.ceil(watchTime / 60) // Convert seconds to minutes
+        timeSpent: Math.ceil(watchTime / 60)
       });
       onLessonComplete?.();
+      setShowCompleteButton(false);
     } catch (error) {
       console.error('Failed to mark lesson complete:', error);
     }
@@ -112,14 +120,18 @@ export function VideoPlayer({ lesson, onLessonComplete }: VideoPlayerProps) {
   const progress = duration ? (currentTime / duration) * 100 : 0;
 
   return (
-    <Card className="border-0 shadow-xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl">
-      <CardHeader>
-        <CardTitle className="text-xl">{lesson.title}</CardTitle>
-        <p className="text-muted-foreground">{lesson.description}</p>
+    <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-0 shadow-2xl overflow-hidden">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
+          {lesson.title}
+        </CardTitle>
+        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+          {lesson.description}
+        </p>
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <div className="relative bg-black rounded-xl overflow-hidden">
+        <div className="relative bg-black rounded-2xl overflow-hidden shadow-2xl">
           <video
             ref={videoRef}
             src={lesson.video_url}
@@ -129,41 +141,41 @@ export function VideoPlayer({ lesson, onLessonComplete }: VideoPlayerProps) {
           />
           
           {/* Video Controls Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-            <div className="space-y-3">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-6">
+            <div className="space-y-4">
               {/* Progress Bar */}
               <div 
-                className="w-full h-2 bg-white/20 rounded-full cursor-pointer"
+                className="w-full h-2 bg-white/20 rounded-full cursor-pointer group"
                 onClick={handleProgressClick}
               >
                 <div 
-                  className="h-full bg-blue-500 rounded-full transition-all duration-150"
+                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-150 group-hover:from-blue-400 group-hover:to-purple-400"
                   style={{ width: `${progress}%` }}
                 />
               </div>
               
               {/* Controls */}
               <div className="flex items-center justify-between text-white">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={togglePlay}
-                    className="text-white hover:bg-white/20"
+                    className="text-white hover:bg-white/20 h-12 w-12 rounded-xl"
                   >
-                    {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                    {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
                   </Button>
                   
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={toggleMute}
-                    className="text-white hover:bg-white/20"
+                    className="text-white hover:bg-white/20 h-10 w-10 rounded-lg"
                   >
                     {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                   </Button>
                   
-                  <span className="text-sm">
+                  <span className="text-sm font-medium">
                     {formatTime(currentTime)} / {formatTime(duration)}
                   </span>
                 </div>
@@ -172,7 +184,7 @@ export function VideoPlayer({ lesson, onLessonComplete }: VideoPlayerProps) {
                   variant="ghost"
                   size="icon"
                   onClick={toggleFullscreen}
-                  className="text-white hover:bg-white/20"
+                  className="text-white hover:bg-white/20 h-10 w-10 rounded-lg"
                 >
                   <Maximize className="h-5 w-5" />
                 </Button>
@@ -181,19 +193,26 @@ export function VideoPlayer({ lesson, onLessonComplete }: VideoPlayerProps) {
           </div>
         </div>
         
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-muted-foreground">
-            Duration: {lesson.duration_minutes} minutes
+        {/* Lesson Info & Complete Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+          <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
+            <div className="flex items-center gap-1">
+              <RotateCcw className="h-4 w-4" />
+              <span>Duration: {lesson.duration_minutes} minutes</span>
+            </div>
           </div>
           
-          <Button 
-            onClick={handleMarkComplete}
-            disabled={markLessonComplete.isPending}
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-          >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Mark Complete
-          </Button>
+          {/* Floating Complete Button */}
+          {showCompleteButton && (
+            <Button 
+              onClick={handleMarkComplete}
+              disabled={markLessonComplete.isPending}
+              className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3 rounded-xl font-semibold"
+            >
+              <CheckCircle className="h-5 w-5 mr-2" />
+              {markLessonComplete.isPending ? 'Marking Complete...' : 'Mark Complete & Continue'}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
