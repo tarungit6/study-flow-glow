@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, CheckCircle, Clock } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Play, CheckCircle, Clock, PlayCircle } from 'lucide-react';
 
 interface Lesson {
   id: string;
@@ -26,75 +26,104 @@ export function LessonPlaylist({
   onLessonSelect, 
   completedLessons 
 }: LessonPlaylistProps) {
+  const completionPercentage = Math.round((completedLessons.length / lessons.length) * 100);
+
   return (
-    <Card className="border-0 shadow-xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Play className="h-5 w-5" />
-          Course Lessons
-        </CardTitle>
-        <div className="text-sm text-muted-foreground">
-          {completedLessons.length} of {lessons.length} completed
+    <div className="space-y-4 p-4">
+      {/* Progress Overview */}
+      <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-100 dark:border-blue-800/30">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+            Course Progress
+          </span>
+          <span className="text-sm font-bold text-blue-900 dark:text-blue-100">
+            {completionPercentage}%
+          </span>
         </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-3 max-h-96 overflow-y-auto">
-        {lessons.map((lesson) => {
+        <Progress value={completionPercentage} className="h-2" />
+        <div className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+          {completedLessons.length} of {lessons.length} lessons completed
+        </div>
+      </div>
+
+      {/* Lessons List */}
+      <div className="space-y-2 max-h-96 overflow-y-auto">
+        {lessons.map((lesson, index) => {
           const isCompleted = completedLessons.includes(lesson.id);
           const isCurrent = currentLessonId === lesson.id;
           
           return (
             <div
               key={lesson.id}
-              className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer hover:shadow-md ${
+              className={`group relative p-4 rounded-xl transition-all duration-200 cursor-pointer border-2 ${
                 isCurrent 
-                  ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800' 
-                  : 'bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:bg-white/80 dark:hover:bg-slate-800/80'
+                  ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800 shadow-md' 
+                  : isCompleted
+                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 hover:shadow-md'
+                  : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:shadow-md'
               }`}
               onClick={() => onLessonSelect(lesson)}
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-1">
+                  {isCompleted ? (
+                    <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+                      <CheckCircle className="h-4 w-4 text-white" />
+                    </div>
+                  ) : isCurrent ? (
+                    <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+                      <PlayCircle className="h-4 w-4 text-white" />
+                    </div>
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center">
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                        {index + 1}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                       Lesson {lesson.order_index}
                     </span>
-                    {isCompleted && (
-                      <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    )}
                     {isCurrent && (
-                      <Badge variant="secondary" className="text-xs">
-                        Playing
+                      <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200">
+                        Now Playing
                       </Badge>
                     )}
                   </div>
                   
-                  <h4 className="font-medium text-sm mb-1 line-clamp-2">
+                  <h4 className="font-semibold text-sm mb-1 line-clamp-2 text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                     {lesson.title}
                   </h4>
                   
-                  <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-2">
                     {lesson.description}
                   </p>
                   
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span>{lesson.duration_minutes} min</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                      <Clock className="h-3 w-3" />
+                      <span>{lesson.duration_minutes} min</span>
+                    </div>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity h-8 px-3 text-xs"
+                    >
+                      <Play className="h-3 w-3 mr-1" />
+                      Play
+                    </Button>
                   </div>
                 </div>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 h-8 w-8"
-                >
-                  <Play className="h-4 w-4" />
-                </Button>
               </div>
             </div>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
