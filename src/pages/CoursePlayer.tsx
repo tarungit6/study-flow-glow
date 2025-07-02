@@ -299,7 +299,7 @@ export default function CoursePlayer() {
                   <div className="flex flex-wrap gap-3">
                     <Badge className="px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-500/30 text-white">
                       <Star className="h-3 w-3 mr-1" />
-                      {course.difficulty_level || 'Beginner'}
+                      {course.difficulty || 'Beginner'}
                     </Badge>
                     <Badge className="px-4 py-2 bg-gradient-to-r from-teal-500/20 to-cyan-500/20 border-teal-500/30 text-white">
                       <Trophy className="h-3 w-3 mr-1" />

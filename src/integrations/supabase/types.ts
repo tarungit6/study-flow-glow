@@ -207,6 +207,32 @@ export type Database = {
           },
         ]
       }
+      course_lesson_vectors: {
+        Row: {
+          created_at: string | null
+          embedding: string | null
+          lesson_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          embedding?: string | null
+          lesson_id: string
+        }
+        Update: {
+          created_at?: string | null
+          embedding?: string | null
+          lesson_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_lesson_vectors_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: true
+            referencedRelation: "course_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_lessons: {
         Row: {
           content: string | null
