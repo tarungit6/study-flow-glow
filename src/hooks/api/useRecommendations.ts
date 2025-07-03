@@ -1,44 +1,73 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
 
-type Recommendation = Database['public']['Tables']['recommendations']['Row'];
+export interface LessonRecommendation {
+  lesson_id: string;
+  course_id: string;
+  similarity: number;
+  lesson_title: string;
+  lesson_content: string;
+  lesson_duration_minutes: number;
+  lesson_video_url: string;
+  course_title: string;
+  course_description: string;
+  course_subject: string;
+  course_difficulty: string;
+  course_grade_level: string;
+  instructor_name: string;
+}
 
-export const useRecommendations = () => {
+interface RecommendationFilters {
+  match_count?: number;
+  match_threshold?: number;
+  filter_course_id?: string;
+  filter_difficulty?: string;
+  filter_grade_level?: string;
+}
+
+export const useRecommendations = (query: string, filters?: RecommendationFilters) => {
   return useQuery({
-    queryKey: ['recommendations'],
+    queryKey: ['recommendations', query, filters],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('recommendations')
-        .select('*')
-        .eq('is_dismissed', false)
-        .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
-        .order('priority', { ascending: true })
-        .order('created_at', { ascending: false });
+      if (!query.trim()) return [];
+      
+      const { data, error } = await supabase.functions.invoke('get-recommendations', {
+        body: {
+          query,
+          ...filters,
+        },
+      });
 
       if (error) throw error;
-      return data;
+      return data.recommendations as LessonRecommendation[];
     },
+    enabled: !!query.trim(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
-export const useDismissRecommendation = () => {
+export const useGenerateEmbedding = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (recommendationId: string) => {
-      const { data, error } = await supabase
-        .from('recommendations')
-        .update({ is_dismissed: true })
-        .eq('id', recommendationId)
-        .select()
-        .single();
+    mutationFn: async ({ lesson_id, course_id, text }: { 
+      lesson_id: string; 
+      course_id: string; 
+      text: string 
+    }) => {
+      const { data, error } = await supabase.functions.invoke('generate-embeddings', {
+        body: {
+          lesson_id,
+          course_id,
+          text,
+        },
+      });
 
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
+      // Invalidate recommendations queries when new embeddings are generated
       queryClient.invalidateQueries({ queryKey: ['recommendations'] });
     },
   });
