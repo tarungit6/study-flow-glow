@@ -2,46 +2,72 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Brain, BookOpen, RotateCcw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Brain, BookOpen, RotateCcw, Search, RefreshCw } from "lucide-react";
+import { useRecommendations, useDismissRecommendation } from "@/hooks/api/useRecommendations";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function AIRecommendations() {
-  const recommendations = [
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { data: recommendations, refetch, isLoading } = useRecommendations();
+  const dismissMutation = useDismissRecommendation();
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsGenerating(true);
+    try {
+      await supabase.functions.invoke('generate-recommendations', {
+        body: { query: searchQuery }
+      });
+      refetch();
+      setSearchQuery("");
+    } catch (error) {
+      console.error('Error generating recommendations:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDismiss = (id: string) => {
+    dismissMutation.mutate(id);
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'review': return RotateCcw;
+      case 'practice': return BookOpen;
+      default: return Brain;
+    }
+  };
+
+  const displayRecommendations = recommendations?.length ? recommendations : [
     {
-      type: "Review",
-      title: "Revisit Integration Techniques",
-      description: "You scored 65% on your last calculus quiz. Let's strengthen this topic!",
-      subject: "Mathematics",
-      priority: "High",
-      estimatedTime: "20 min",
-      icon: RotateCcw,
-    },
-    {
-      type: "Practice",
-      title: "Data Structures Deep Dive",
-      description: "Based on your learning pattern, now's a great time to practice arrays and linked lists.",
-      subject: "Computer Science",
-      priority: "Medium",
-      estimatedTime: "30 min",
-      icon: BookOpen,
-    },
-    {
-      type: "Challenge",
-      title: "Quantum Physics Quiz",
-      description: "You're ready for advanced quantum mechanics concepts. Take this challenge!",
-      subject: "Physics",
-      priority: "Low",
-      estimatedTime: "15 min",
-      icon: Brain,
-    },
+      id: 'default-1',
+      title: "Get Started with Learning",
+      description: "Search for topics you're interested in to get personalized AI recommendations!",
+      recommendation_type: "explore",
+      priority: 1,
+      action_url: null,
+      is_dismissed: false,
+      created_at: new Date().toISOString(),
+      expires_at: null,
+      user_id: null
+    }
   ];
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "High": return "destructive";
-      case "Medium": return "default";
-      case "Low": return "secondary";
-      default: return "secondary";
-    }
+  const getPriorityColor = (priority: number) => {
+    if (priority === 1) return "destructive";
+    if (priority === 2) return "default";
+    return "secondary";
+  };
+
+  const getPriorityLabel = (priority: number) => {
+    if (priority === 1) return "High";
+    if (priority === 2) return "Medium";
+    return "Low";
   };
 
   return (
@@ -51,37 +77,80 @@ export function AIRecommendations() {
           <Brain className="w-5 h-5" />
           AI Recommendations
         </CardTitle>
+        <div className="flex gap-2 mt-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Search for topics (e.g., javascript, calculus, chemistry)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            />
+          </div>
+          <Button
+            onClick={handleSearch}
+            disabled={!searchQuery.trim() || isGenerating}
+            size="sm"
+            className="gradient-primary border-0 text-white"
+          >
+            {isGenerating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {recommendations.map((rec, index) => (
-          <div key={index} className="p-4 rounded-lg bg-background/50 hover:bg-background/70 transition-colors">
-            <div className="flex items-start gap-3">
-              <div className="gradient-primary rounded-full p-2 flex-shrink-0">
-                <rec.icon className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-sm">{rec.title}</h4>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={getPriorityColor(rec.priority)} className="text-xs">
-                      {rec.priority}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">{rec.estimatedTime}</span>
+        {isLoading ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Loading recommendations...
+          </div>
+        ) : (
+          displayRecommendations.map((rec, index) => {
+            const IconComponent = getTypeIcon(rec.recommendation_type);
+            return (
+              <div key={rec.id || index} className="p-4 rounded-lg bg-background/50 hover:bg-background/70 transition-colors">
+                <div className="flex items-start gap-3">
+                  <div className="gradient-primary rounded-full p-2 flex-shrink-0">
+                    <IconComponent className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-sm">{rec.title}</h4>
+                      <div className="flex items-center gap-2">
+                        {rec.priority && (
+                          <Badge variant={getPriorityColor(rec.priority)} className="text-xs">
+                            {getPriorityLabel(rec.priority)}
+                          </Badge>
+                        )}
+                        <span className="text-xs text-muted-foreground">15 min</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{rec.description}</p>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs">
+                        {rec.recommendation_type}
+                      </Badge>
+                      <div className="flex gap-2">
+                        {rec.action_url && (
+                          <Button size="sm" className="gradient-primary border-0 text-white">
+                            Start Learning
+                          </Button>
+                        )}
+                        {rec.id !== 'default-1' && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleDismiss(rec.id)}
+                            className="text-xs"
+                          >
+                            Dismiss
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground">{rec.description}</p>
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="text-xs">
-                    {rec.subject}
-                  </Badge>
-                  <Button size="sm" className="gradient-primary border-0 text-white">
-                    Start {rec.type}
-                  </Button>
-                </div>
               </div>
-            </div>
-          </div>
-        ))}
+            );
+          })
+        )}
       </CardContent>
     </Card>
   );

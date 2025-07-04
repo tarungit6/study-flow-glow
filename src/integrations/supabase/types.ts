@@ -209,21 +209,31 @@ export type Database = {
       }
       course_lesson_vectors: {
         Row: {
+          course_id: string | null
           created_at: string | null
           embedding: string | null
           lesson_id: string
         }
         Insert: {
+          course_id?: string | null
           created_at?: string | null
           embedding?: string | null
           lesson_id: string
         }
         Update: {
+          course_id?: string | null
           created_at?: string | null
           embedding?: string | null
           lesson_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "course_lesson_vectors_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "educational_content"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "course_lesson_vectors_lesson_id_fkey"
             columns: ["lesson_id"]
@@ -1228,7 +1238,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_lesson_recommendations: {
+        Args: {
+          query_embedding: string
+          match_threshold?: number
+          match_count?: number
+          filter_course_id?: string
+          filter_difficulty?: string
+          filter_grade_level?: string
+        }
+        Returns: {
+          lesson_id: string
+          course_id: string
+          similarity: number
+          lesson_title: string
+          lesson_content: string
+          lesson_duration_minutes: number
+          lesson_video_url: string
+          course_title: string
+          course_description: string
+          course_subject: string
+          course_difficulty: string
+          course_grade_level: string
+          instructor_name: string
+        }[]
+      }
     }
     Enums: {
       achievement_type:
