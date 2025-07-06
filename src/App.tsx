@@ -11,7 +11,6 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
 import CoursePlayer from "./pages/CoursePlayer";
 import BrowseCourses from "./pages/BrowseCourses";
@@ -47,14 +46,6 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Index />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
                     </ProtectedRoute>
                   }
                 />

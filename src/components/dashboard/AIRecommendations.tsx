@@ -3,14 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Brain, BookOpen, RotateCcw, Search, RefreshCw } from "lucide-react";
+import { Brain, BookOpen, RotateCcw, Search, RefreshCw, Zap } from "lucide-react";
 import { useRecommendations, useDismissRecommendation } from "@/hooks/api/useRecommendations";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function AIRecommendations() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false);
   const { data: recommendations, refetch, isLoading } = useRecommendations();
   const dismissMutation = useDismissRecommendation();
 
@@ -28,6 +30,26 @@ export function AIRecommendations() {
       console.error('Error generating recommendations:', error);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const generateEmbeddings = async () => {
+    setIsGeneratingEmbeddings(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-embeddings');
+      
+      if (error) {
+        console.error('Error generating embeddings:', error);
+        toast.error('Failed to generate embeddings');
+      } else {
+        console.log('Embeddings generated successfully:', data);
+        toast.success(`Successfully generated embeddings! Processed: ${data.processed}, Errors: ${data.errors}`);
+      }
+    } catch (error) {
+      console.error('Error calling generate-embeddings function:', error);
+      toast.error('Failed to call embedding generation function');
+    } finally {
+      setIsGeneratingEmbeddings(false);
     }
   };
 
@@ -93,6 +115,20 @@ export function AIRecommendations() {
             className="gradient-primary border-0 text-white"
           >
             {isGenerating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+          </Button>
+          <Button 
+            onClick={generateEmbeddings}
+            disabled={isGeneratingEmbeddings}
+            variant="outline"
+            size="sm"
+            className="border-primary/20"
+          >
+            {isGeneratingEmbeddings ? (
+              <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Zap className="w-4 h-4 mr-2" />
+            )}
+            {isGeneratingEmbeddings ? 'Generating...' : 'Generate AI Embeddings'}
           </Button>
         </div>
       </CardHeader>
