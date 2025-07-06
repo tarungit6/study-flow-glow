@@ -38,7 +38,7 @@ serve(async (req) => {
         title,
         content,
         module_id,
-        course_modules!inner(course_id)
+        educational_content!inner(id)
       `)
       .not('content', 'is', null);
 
@@ -107,7 +107,7 @@ serve(async (req) => {
           .from('course_lesson_vectors')
           .insert({
             lesson_id: lesson.id,
-            course_id: lesson.course_modules.course_id,
+            course_id: lesson.educational_content.id,
             embedding: JSON.stringify(embedding)
           });
 
